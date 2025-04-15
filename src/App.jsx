@@ -9,23 +9,25 @@ export default function App() {
   const [result, setResult] = useState("");
 
   const handleSubmit = async () => {
-    const prompt = `Generate ${lines} lines of marketing copy for ${url || "this keyword"} in ${language}, with the goal of ${objective.toLowerCase()}.`;
+  const prompt = `Generate ${lines} lines of marketing copy for ${url} in ${language}, with the goal of ${objective.toLowerCase()}.`;
 
-    try {
-      const response = await axios.post("https://llm-backend-82gd.onrender.com/api/generate-copy", {
-        prompt,
-      });
-
-      // Ensure you update the result with the correct response data
-      if (response.data.output) {
-        setResult(response.data.output);
-      } else {
-        setResult("No output received from the backend.");
+  try {
+    const response = await axios.post(
+      "https://https://llm-backend-82gd.onrender.com/api/generate-copy",
+      {
+        input_text: prompt,  // Ensure this is being sent as 'input_text'
       }
-    } catch (err) {
-      setResult("Error generating content.");
+    );
+
+    if (response.data.response) {
+      setResult(response.data.response);
+    } else {
+      setResult("No output received from the backend.");
     }
-  };
+  } catch (err) {
+    setResult("Error generating content.");
+  }
+};
 
   return (
     <div className="p-8 max-w-xl mx-auto">
