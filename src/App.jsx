@@ -15,7 +15,13 @@ export default function App() {
       const response = await axios.post("https://llm-backend-82gd.onrender.com/generate", {
         prompt,
       });
-      setResult(response.data.output);
+
+      // Ensure you update the result with the correct response data
+      if (response.data.output) {
+        setResult(response.data.output);
+      } else {
+        setResult("No output received from the backend.");
+      }
     } catch (err) {
       setResult("Error generating content.");
     }
