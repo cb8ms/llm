@@ -12,7 +12,7 @@ export default function App() {
     const prompt = `Generate ${lines} lines of marketing copy for ${url || "this keyword"} in ${language}, with the goal of ${objective.toLowerCase()}.`;
 
     try {
-      const response = await axios.post("https://llm-backend-82gd.onrender.com/api/generate-copy", {
+      const response = await axios.post("https://llm-backend-82gd.onrender.com/generate", {
         prompt,
       });
 
