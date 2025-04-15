@@ -16,7 +16,12 @@ export default function App() {
       "https://https://llm-backend-82gd.onrender.com/api/generate-copy",
       {
         input_text: prompt,  // Ensure this is being sent as 'input_text'
-      }
+      },
+       {
+    headers: {
+      "Content-Type": "application/json", // Ensure it's sending JSON
+    },
+  }
     );
 
     if (response.data.response) {
