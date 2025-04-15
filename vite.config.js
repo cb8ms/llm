@@ -1,15 +1,12 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   build: {
     outDir: "dist",
     rollupOptions: {
-      input: {
-        main: "/index.html",
-      },
+      input: "index.html",  // Ensure the path is correct to the index.html file
     },
   },
 });
