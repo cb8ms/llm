@@ -9,77 +9,72 @@ export default function App() {
   const [lines, setLines] = useState(5);
   const [result, setResult] = useState("");
 
-  const handleSubmit = async () => {
-    let prompt = "";
-  
-    if (platform === "Facebook") {
-      prompt = `You are a skilled marketing copywriter with expertise in creating compelling ads. You will need to go through the following steps to ensure the exact demands of the input values and provide ${lines} versions of each of the requested outputs.
-  
-  Input Client:
-  Please write the ads for ${url} and use the tone of voice of the website and try and use as many of the available characters as listed in the output format
-  
-  Input Language:
-  Please write the ads in the correct spelling and grammar of ${language}
-  
-  Input Key Marketing Objective:
-  The objective of the ads is to ${objective}
-  
-  If it is Sales then you will sell the product to the user and should contain as much direct information about the product.
-  If it is Awareness then you will generate awareness for the product.
-  
-  #########
-  
-  Facebook prompt:
-  1. Hook/Opening Line: Must capture attention quickly within the primary text
-  2. Do not exceed the character limit below in the output format
-  3. Compliance: No exaggerated claims or anything that cannot be found on the provided URL, if pricing is available please include this in the primary text.
-  
-  **Output Format**
-  Provide the following formats below clearly annotating which ad text is for the placement
-  
-  1. Image Facebook Feed
-  Primary text: 50-150 characters
-  Headline: 27 characters
-  
-  2. Facebook Stories
-  Primary text: 125 characters
-  Headline: 40 characters
-  
-  3. Facebook Reels
-  Primary text: 72 characters
-  Headline: 10 characters
-  
-  4. Facebook Video Feed
-  Primary text: 50-150 characters
-  Headline: 27 characters`;
-    }
-  
-    else if (platform === "Google") {
-      prompt = `You are a skilled marketing copywriter with expertise in Google Ads.
-  
-  Input Client:
-  Write copy for ${url} using the tone of voice of the website.
-  
-  Input Language:
-  Use ${language} spelling and grammar.
-  
-  Input Key Marketing Objective:
-  The goal is to ${objective}.
-  
-  Create ${lines} variations of each required ad component below:
-  
-  #########
-  
-  **Output Format**
-  1. Responsive Search Ads (RSA)
-  - Headlines (up to 30 characters): Provide 5 variations
-  - Descriptions (up to 90 characters): Provide 4 variations
-  
-  2. Display Ads
-  - Headline (up to 30 characters)
-  - Description (up to 90 characters)
-  
-  Make sure the output stays within character limits and reflects the intent and tone of the client's website. Do not include unverifiable claims.`;
+   const handleSubmit = async () => {
+    const prompt = `You are a skilled marketing copywriter with expertise in creating compelling ads. You will need to go through the following steps to ensure the exact demands of the input values and provide ${lines} versions of each of the requested outputs.
+
+Input Client:
+Please write the ads for ${url} and use the tone of voice of the website and try and use as many of the available characters as listed in the output format
+
+Input Language:
+Please write the ads in the correct spelling and grammar of ${language}
+
+
+
+Input Key Marketing Objective:
+The objective of the ads is to ${objective}
+
+
+if it is Sales then you will sell the product to the user and should contain as much direct information about the product
+If it is Awareness then you will generate awareness for the product
+
+
+#########
+
+Facebook prompt:
+1. Hook/Opening Line: Must capture attention quickly within the primary text
+2. Do not exceed the character limit below in the output format
+3. Compliance: No exaggerated claims or anything that cannot be found on the provided URL, if pricing is available please include this in the primary text.
+
+**Output Format**
+Provide the following formats below clearly annotating which ad text is for the placement
+
+1. Image Facebook Feed
+Primary text: 50-150 characters
+Headline: 27 characters
+
+2. Facebook Stories
+Primary text: 125 characters
+Headline: 40 characters
+
+3. Facebook Reels
+Primary text: 72 characters
+Headline: 10 characters
+
+4. Facebook Video Feed
+Primary text: 50-150 characters
+Headline: 27 characters
+`;
+
+    try {
+      const response = await axios.post(
+        "https://llm-backend-82gd.onrender.com/api/generate-copy",
+        {
+          input_text: prompt,  // Ensure the request has the 'input_text' field
+        },
+        {
+          headers: {
+            "Content-Type": "application/json", // Ensure the frontend sends JSON
+          },
+        }
+      );
+
+      if (response.data.response) {
+        setResult(response.data.response);
+      } else {
+        setResult("No output received from the backend.");
+      }
+    } catch (err) {
+      setResult("Error generating content.");
     }
   };
   
