@@ -107,6 +107,18 @@ Make sure the output stays within character limits and reflects the intent and t
     }
   };
 
+  const handleDownloadCSV = () => {
+    const lines = result.split("\n").filter((line) => line.trim() !== "");
+    const csvContent = "data:text/csv;charset=utf-8," + lines.map((line) => `"${line.replace(/"/g, '""')}"`).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "marketing-copy.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="p-8 max-w-xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Marketing Copy Generator</h1>
@@ -191,7 +203,17 @@ Make sure the output stays within character limits and reflects the intent and t
         </div>
       )}
 
-      <pre className="mt-4 bg-gray-100 p-4 whitespace-pre-wrap">{result}</pre>
+      {result && (
+        <div className="mt-4">
+          <pre className="bg-gray-100 p-4 whitespace-pre-wrap">{result}</pre>
+          <button
+            className="mt-2 bg-green-600 text-white px-4 py-2 rounded"
+            onClick={handleDownloadCSV}
+          >
+            Download CSV
+          </button>
+        </div>
+      )}
     </div>
   );
 }
