@@ -13,8 +13,9 @@ export default function App() {
   const handleSubmit = async () => {
     let prompt = "";
 
-    setResult(""); // Clear previous result
-    setLoading(true); // Show "Working on it..."
+    // Clear the previous result and show loader
+    setResult("");
+    setLoading(true);
 
     if (platform === "Facebook") {
       prompt = `You are a skilled marketing copywriter with expertise in creating compelling ads. You will need to go through the following steps to ensure the exact demands of the input values and provide ${lines} versions of each of the requested outputs.
@@ -103,7 +104,7 @@ Make sure the output stays within character limits and reflects the intent and t
     } catch (err) {
       setResult("Error generating content.");
     } finally {
-      setLoading(false); // Hide "Working on it..."
+      setLoading(false);
     }
   };
 
@@ -180,7 +181,29 @@ Make sure the output stays within character limits and reflects the intent and t
       </button>
 
       {loading && (
-        <p className="text-blue-600 font-medium mt-2">Working on it…</p>
+        <div className="inline-flex items-center gap-2 text-blue-600 font-medium mt-2">
+          <svg
+            className="animate-spin h-4 w-4 text-blue-600"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            ></circle>
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+            ></path>
+          </svg>
+          Working on it…
+        </div>
       )}
 
       {result && (
