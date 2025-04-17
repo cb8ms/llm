@@ -122,22 +122,29 @@ const handleDownloadCSV = () => {
 
   const lines = result.split("\n").map(line => line.trim()).filter(Boolean);
 
-  const rows = [["Version", "Primary Text", "Headline"]];
-  let version = "";
+  const rows = [["Section", "Primary Text", "Headline"]];
+  let section = "";
   let primary = "";
   let headline = "";
 
   for (const line of lines) {
-    if (/^Version\s*\d+/i.test(line)) {
-      version = line.trim();
-    } else if (line.startsWith("Primary text:")) {
-      primary = line.replace("Primary text:", "").trim();
-    } else if (line.startsWith("Headline:")) {
-      headline = line.replace("Headline:", "").trim();
-      // When both are ready, push a row
-      rows.push([version, primary, headline]);
-      primary = "";
-      headline = "";
+    // Detect section title like "### 1. Image Facebook Feed"
+    if (/^###\s*\d+\./.test(line)) {
+      section = line.replace(/^###\s*\d+\.\s*/, "").trim();
+    }
+
+    // Detect primary text and headline lines
+    else if (line.startsWith("- **Primary text**:")) {
+      primary = line.replace("- **Primary text**:", "").trim();
+    } else if (line.startsWith("- **Headline**:")) {
+      headline = line.replace("- **Headline**:", "").trim();
+
+      // Push row when both primary & headline exist
+      if (primary && headline) {
+        rows.push([section, primary, headline]);
+        primary = "";
+        headline = "";
+      }
     }
   }
 
