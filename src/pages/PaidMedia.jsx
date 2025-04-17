@@ -117,7 +117,7 @@ Provide a short paragraph on the reason why this ad copy has been selected follo
     }
   };
 
-// Replace existing handleDownloadCSV with this version
+// Final fix: Robust CSV Export for varied formats including '- ' prefix and '*Version X:*'
 const handleDownloadCSV = () => {
   if (!result.trim()) {
     alert("No response to export.");
@@ -132,25 +132,27 @@ const handleDownloadCSV = () => {
   let headline = "";
 
   for (let line of lines) {
-    // Match placement title like "**1. Image Facebook Feed**"
-    const placementMatch = line.match(/^\*\*\d+\.\s*(.+?)\*\*$/);
+    // Match placement like "**1. Image Facebook Feed**"
+    const placementMatch = line.match(/^\*\*\d+\.\s*(.*?)\*\*$/);
     if (placementMatch) {
       currentPlacement = placementMatch[1];
       continue;
     }
 
-    // Skip "**Ad Text X**" lines
-    if (/^\*\*Ad Text \d+:?\*\*/i.test(line)) continue;
+    // Skip any version lines like '*Version X:*'
+    if (/^\*Version \d+:\*/i.test(line)) continue;
 
-    // Match "Primary text:" line
-    if (/^Primary text:/i.test(line)) {
-      primary = line.replace(/^Primary text:/i, "").trim();
+    // Match Primary text: can have or not have hyphen prefix
+    const primaryMatch = line.match(/^-?\s*Primary text:\s*(.+)$/i);
+    if (primaryMatch) {
+      primary = primaryMatch[1].trim();
       continue;
     }
 
-    // Match "Headline:" line
-    if (/^Headline:/i.test(line)) {
-      headline = line.replace(/^Headline:/i, "").trim();
+    // Match Headline: can have or not have hyphen prefix
+    const headlineMatch = line.match(/^-?\s*Headline:\s*(.+)$/i);
+    if (headlineMatch) {
+      headline = headlineMatch[1].trim();
 
       if (currentPlacement && primary && headline) {
         rows.push([currentPlacement, primary, headline]);
