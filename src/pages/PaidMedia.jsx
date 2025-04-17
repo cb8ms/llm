@@ -118,28 +118,35 @@ Provide a short paragraph on the reason why this ad copy has been selected follo
   };
 
 const handleDownloadCSV = () => {
-  if (!result.trim()) return;
+  if (!result.trim()) {
+    alert("No response to export.");
+    return;
+  }
 
   const lines = result.split("\n").map(line => line.trim()).filter(Boolean);
+  const rows = [["Placement", "Primary Text", "Headline"]];
 
-  const rows = [["Version", "Placement", "Primary Text", "Headline"]];
-  let version = "";
-  let placement = "";
+  let currentPlacement = "";
   let primary = "";
   let headline = "";
 
   for (const line of lines) {
-    if (/^###\s*\d+\.\s+/.test(line)) {
-      placement = line.replace(/^###\s*/, "").trim();
-    } else if (/^\*\*Ad Version \d+\*\*/.test(line)) {
-      const match = line.match(/Ad Version (\d+)/);
-      if (match) version = `Version ${match[1]}`;
-    } else if (line.startsWith("- **Primary text**:")) {
-      primary = line.replace("- **Primary text**:", "").trim();
-    } else if (line.startsWith("- **Headline**:")) {
-      headline = line.replace("- **Headline**:", "").trim();
-      if (version && placement && primary && headline) {
-        rows.push([version, placement, primary, headline]);
+    // Match placement section like "1. Facebook Reels"
+    const placementMatch = line.match(/^\d+\.\s+(.*)/);
+    if (placementMatch) {
+      currentPlacement = placementMatch[1].trim();
+    }
+
+    // Capture primary text
+    else if (line.startsWith("Primary text:")) {
+      primary = line.replace("Primary text:", "").trim();
+    }
+
+    // Capture headline and push when both fields are available
+    else if (line.startsWith("Headline:")) {
+      headline = line.replace("Headline:", "").trim();
+      if (currentPlacement && primary && headline) {
+        rows.push([currentPlacement, primary, headline]);
         primary = "";
         headline = "";
       }
@@ -153,7 +160,9 @@ const handleDownloadCSV = () => {
 
   const csvContent =
     "data:text/csv;charset=utf-8," +
-    rows.map(row => row.map(field => `"${field.replace(/"/g, '""')}"`).join(",")).join("\n");
+    rows.map(row =>
+      row.map(field => `"${field.replace(/"/g, '""')}"`).join(",")
+    ).join("\n");
 
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement("a");
@@ -163,6 +172,7 @@ const handleDownloadCSV = () => {
   link.click();
   document.body.removeChild(link);
 };
+
 
 
 
