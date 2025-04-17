@@ -117,13 +117,9 @@ Provide a short paragraph on the reason why this ad copy has been selected follo
     }
   };
 
-// Final fix: Robust CSV Export for varied formats including '- ' prefix and '*Version X:*'
-const handleDownloadCSV = () => {
-  if (!result.trim()) {
-    alert("No response to export.");
-    return;
-  }
+// Robust Export: Supports Facebook & Google Ads formats with different parsers
 
+const handleFacebookCSV = () => {
   const lines = result.split("\n").map(line => line.trim()).filter(Boolean);
   const rows = [["Placement", "Primary Text", "Headline"]];
 
@@ -132,28 +128,23 @@ const handleDownloadCSV = () => {
   let headline = "";
 
   for (let line of lines) {
-    // Match placement like "**1. Image Facebook Feed**"
     const placementMatch = line.match(/^\*\*\d+\.\s*(.*?)\*\*$/);
     if (placementMatch) {
       currentPlacement = placementMatch[1];
       continue;
     }
 
-    // Skip any version lines like '*Version X:*'
     if (/^\*Version \d+:\*/i.test(line)) continue;
 
-    // Match Primary text: can have or not have hyphen prefix
     const primaryMatch = line.match(/^-?\s*Primary text:\s*(.+)$/i);
     if (primaryMatch) {
       primary = primaryMatch[1].trim();
       continue;
     }
 
-    // Match Headline: can have or not have hyphen prefix
     const headlineMatch = line.match(/^-?\s*Headline:\s*(.+)$/i);
     if (headlineMatch) {
       headline = headlineMatch[1].trim();
-
       if (currentPlacement && primary && headline) {
         rows.push([currentPlacement, primary, headline]);
         primary = "";
@@ -162,7 +153,83 @@ const handleDownloadCSV = () => {
     }
   }
 
-  if (rows.length === 1) {
+  return downloadAsCSV(rows, "facebook-ads.csv");
+};
+
+const handleGoogleCSV = () => {
+  const lines = result.split("\n").map(line => line.trim()).filter(Boolean);
+  const rows = [["Ad Variation", "Headline 1", "Headline 2", "Description 1", "Description 2", "Path 1", "Path 2"]];
+
+  let variation = 1;
+  let h1 = "";
+  let h2 = "";
+  let d1 = "";
+  let d2 = "";
+  let p1 = "";
+  let p2 = "";
+
+  for (let line of lines) {
+    const headline1 = line.match(/^-?\s*Headline \(1\):\s*(.+)/i);
+    if (headline1) {
+      h1 = headline1[1].trim();
+      continue;
+    }
+    const headline2 = line.match(/^-?\s*Headline \(2\):\s*(.+)/i);
+    if (headline2) {
+      h2 = headline2[1].trim();
+      continue;
+    }
+    const desc1 = line.match(/^-?\s*Description \(1\):\s*(.+)/i);
+    if (desc1) {
+      d1 = desc1[1].trim();
+      continue;
+    }
+    const desc2 = line.match(/^-?\s*Description \(2\):\s*(.+)/i);
+    if (desc2) {
+      d2 = desc2[1].trim();
+      continue;
+    }
+    const path1 = line.match(/^-?\s*Path \(1\):\s*(.+)/i);
+    if (path1) {
+      p1 = path1[1].trim();
+      continue;
+    }
+    const path2 = line.match(/^-?\s*Path \(2\):\s*(.+)/i);
+    if (path2) {
+      p2 = path2[1].trim();
+      if (h1 && h2 && d1 && d2 && p1 && p2) {
+        rows.push([
+          `Variation ${variation++}`,
+          h1,
+          h2,
+          d1,
+          d2,
+          p1,
+          p2
+        ]);
+        h1 = h2 = d1 = d2 = p1 = p2 = "";
+      }
+    }
+  }
+
+  return downloadAsCSV(rows, "google-ads.csv");
+};
+
+const handleDownloadCSV = () => {
+  if (!result.trim()) {
+    alert("No response to export.");
+    return;
+  }
+
+  if (platform === "Facebook") {
+    handleFacebookCSV();
+  } else if (platform === "Google Ads") {
+    handleGoogleCSV();
+  }
+};
+
+const downloadAsCSV = (rows, filename) => {
+  if (rows.length <= 1) {
     alert("No valid rows to export.");
     return;
   }
@@ -174,12 +241,11 @@ const handleDownloadCSV = () => {
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement("a");
   link.setAttribute("href", encodedUri);
-  link.setAttribute("download", "marketing-copy.csv");
+  link.setAttribute("download", filename);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 };
-
 
 
   return (
