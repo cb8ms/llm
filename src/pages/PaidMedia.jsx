@@ -169,34 +169,19 @@ const handleGoogleCSV = () => {
   let p2 = "";
 
   for (let line of lines) {
-    const headline1 = line.match(/^-?\s*Headline \(1\):\s*(.+)/i);
-    if (headline1) {
-      h1 = headline1[1].trim();
-      continue;
-    }
-    const headline2 = line.match(/^-?\s*Headline \(2\):\s*(.+)/i);
-    if (headline2) {
-      h2 = headline2[1].trim();
-      continue;
-    }
-    const desc1 = line.match(/^-?\s*Description \(1\):\s*(.+)/i);
-    if (desc1) {
-      d1 = desc1[1].trim();
-      continue;
-    }
-    const desc2 = line.match(/^-?\s*Description \(2\):\s*(.+)/i);
-    if (desc2) {
-      d2 = desc2[1].trim();
-      continue;
-    }
-    const path1 = line.match(/^-?\s*Path \(1\):\s*(.+)/i);
-    if (path1) {
-      p1 = path1[1].trim();
-      continue;
-    }
-    const path2 = line.match(/^-?\s*Path \(2\):\s*(.+)/i);
-    if (path2) {
-      p2 = path2[1].trim();
+    // Match lines like '| Headline (1)  | Discover Gleneagles            | (23)       |'
+    const cellMatch = line.match(/^\|\s*(Headline \(1\)|Headline \(2\)|Description \(1\)|Description \(2\)|Path \(1\)|Path \(2\))\s*\|\s*(.*?)\s*\|/i);
+    if (cellMatch) {
+      const label = cellMatch[1].toLowerCase();
+      const value = cellMatch[2].trim();
+
+      if (label === "headline (1)") h1 = value;
+      if (label === "headline (2)") h2 = value;
+      if (label === "description (1)") d1 = value;
+      if (label === "description (2)") d2 = value;
+      if (label === "path (1)") p1 = value;
+      if (label === "path (2)") p2 = value;
+
       if (h1 && h2 && d1 && d2 && p1 && p2) {
         rows.push([
           `Variation ${variation++}`,
