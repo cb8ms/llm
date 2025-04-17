@@ -117,6 +117,7 @@ Provide a short paragraph on the reason why this ad copy has been selected follo
     }
   };
 
+// Replace existing handleDownloadCSV with this version
 const handleDownloadCSV = () => {
   if (!result.trim()) {
     alert("No response to export.");
@@ -131,29 +132,26 @@ const handleDownloadCSV = () => {
   let headline = "";
 
   for (let line of lines) {
-    // Match lines like "### 1. Image Facebook Feed"
-    const placementMatch = line.match(/^###\s*\d+\.\s*(.+)$/);
+    // Match placement title like "**1. Image Facebook Feed**"
+    const placementMatch = line.match(/^\*\*\d+\.\s*(.+?)\*\*$/);
     if (placementMatch) {
       currentPlacement = placementMatch[1];
       continue;
     }
 
-    // Match lines like "**Ad Variation X:**" — skip
-    if (/^\*\*Ad Variation \d+:?\*\*/i.test(line)) {
+    // Skip "**Ad Text X**" lines
+    if (/^\*\*Ad Text \d+:?\*\*/i.test(line)) continue;
+
+    // Match "Primary text:" line
+    if (/^Primary text:/i.test(line)) {
+      primary = line.replace(/^Primary text:/i, "").trim();
       continue;
     }
 
-    // Match primary text line
-    if (line.toLowerCase().startsWith("- **primary text:**")) {
-      primary = line.replace(/^- \*\*primary text:\*\*/i, "").trim();
-      continue;
-    }
+    // Match "Headline:" line
+    if (/^Headline:/i.test(line)) {
+      headline = line.replace(/^Headline:/i, "").trim();
 
-    // Match headline line
-    if (line.toLowerCase().startsWith("- **headline:**")) {
-      headline = line.replace(/^- \*\*headline:\*\*/i, "").trim();
-
-      // Save the row only if all three pieces exist
       if (currentPlacement && primary && headline) {
         rows.push([currentPlacement, primary, headline]);
         primary = "";
@@ -169,9 +167,7 @@ const handleDownloadCSV = () => {
 
   const csvContent =
     "data:text/csv;charset=utf-8," +
-    rows.map(row =>
-      row.map(field => `"${field.replace(/"/g, '""')}"`).join(",")
-    ).join("\n");
+    rows.map(row => row.map(field => `"${field.replace(/"/g, '""')}"`).join(",")).join("\n");
 
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement("a");
@@ -181,7 +177,6 @@ const handleDownloadCSV = () => {
   link.click();
   document.body.removeChild(link);
 };
-
 
 
 
