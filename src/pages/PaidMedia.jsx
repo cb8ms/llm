@@ -122,26 +122,35 @@ const handleDownloadCSV = () => {
 
   const lines = result.split("\n").map(line => line.trim()).filter(Boolean);
 
-  const rows = [["Section", "Primary Text", "Headline"]];
-  let section = "";
+  const rows = [["Version", "Placement", "Primary Text", "Headline"]];
+  let version = "";
+  let placement = "";
   let primary = "";
   let headline = "";
 
   for (const line of lines) {
-    // Detect section title like "### 1. Image Facebook Feed"
-    if (/^###\s*\d+\./.test(line)) {
-      section = line.replace(/^###\s*\d+\.\s*/, "").trim();
+    // Version title like "### Version 1"
+    if (/^###\s*Version\s*\d+/i.test(line)) {
+      version = line.replace(/^###\s*/, "").trim();
     }
 
-    // Detect primary text and headline lines
-    else if (line.startsWith("- **Primary text**:")) {
-      primary = line.replace("- **Primary text**:", "").trim();
-    } else if (line.startsWith("- **Headline**:")) {
-      headline = line.replace("- **Headline**:", "").trim();
+    // Placement title like "**1. Image Facebook Feed**"
+    else if (/^\*\*\d+\.\s+.+\*\*/.test(line)) {
+      placement = line.replace(/^\*\*\d+\.\s+/, "").replace(/\*\*$/, "").trim();
+    }
 
-      // Push row when both primary & headline exist
+    // Primary text line
+    else if (line.startsWith("- Primary text:")) {
+      primary = line.replace("- Primary text:", "").trim();
+    }
+
+    // Headline line
+    else if (line.startsWith("- Headline:")) {
+      headline = line.replace("- Headline:", "").trim();
+
+      // When both primary and headline are ready, push the row
       if (primary && headline) {
-        rows.push([section, primary, headline]);
+        rows.push([version, placement, primary, headline]);
         primary = "";
         headline = "";
       }
@@ -165,6 +174,7 @@ const handleDownloadCSV = () => {
   link.click();
   document.body.removeChild(link);
 };
+
 
 
   return (
