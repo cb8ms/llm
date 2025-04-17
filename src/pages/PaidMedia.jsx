@@ -130,22 +130,30 @@ const handleDownloadCSV = () => {
   let primary = "";
   let headline = "";
 
-  for (const line of lines) {
-    // Match: "### 1. Image Facebook Feed"
-    const placementMatch = line.match(/^###\s*\d+\.\s+(.*)/i);
+  for (let line of lines) {
+    // Match lines like "### 1. Image Facebook Feed"
+    const placementMatch = line.match(/^###\s*\d+\.\s*(.+)$/);
     if (placementMatch) {
-      currentPlacement = placementMatch[1].trim();
+      currentPlacement = placementMatch[1];
+      continue;
     }
 
-    // Match Primary text
-    else if (/^[-*]\s*Primary text:/i.test(line)) {
-      primary = line.replace(/^[-*]\s*Primary text:/i, "").trim();
+    // Match lines like "**Ad Variation X:**" — skip
+    if (/^\*\*Ad Variation \d+:?\*\*/i.test(line)) {
+      continue;
     }
 
-    // Match Headline
-    else if (/^[-*]\s*Headline:/i.test(line)) {
-      headline = line.replace(/^[-*]\s*Headline:/i, "").trim();
+    // Match primary text line
+    if (line.toLowerCase().startsWith("- **primary text:**")) {
+      primary = line.replace(/^- \*\*primary text:\*\*/i, "").trim();
+      continue;
+    }
 
+    // Match headline line
+    if (line.toLowerCase().startsWith("- **headline:**")) {
+      headline = line.replace(/^- \*\*headline:\*\*/i, "").trim();
+
+      // Save the row only if all three pieces exist
       if (currentPlacement && primary && headline) {
         rows.push([currentPlacement, primary, headline]);
         primary = "";
