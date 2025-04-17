@@ -131,20 +131,21 @@ const handleDownloadCSV = () => {
   let headline = "";
 
   for (const line of lines) {
-    // Match placement section like "1. Facebook Reels"
-    const placementMatch = line.match(/^\d+\.\s+(.*)/);
+    // Match: "### 1. Image Facebook Feed"
+    const placementMatch = line.match(/^###\s*\d+\.\s+(.*)/i);
     if (placementMatch) {
       currentPlacement = placementMatch[1].trim();
     }
 
-    // Capture primary text
-    else if (line.startsWith("Primary text:")) {
-      primary = line.replace("Primary text:", "").trim();
+    // Match Primary text
+    else if (/^[-*]\s*Primary text:/i.test(line)) {
+      primary = line.replace(/^[-*]\s*Primary text:/i, "").trim();
     }
 
-    // Capture headline and push when both fields are available
-    else if (line.startsWith("Headline:")) {
-      headline = line.replace("Headline:", "").trim();
+    // Match Headline
+    else if (/^[-*]\s*Headline:/i.test(line)) {
+      headline = line.replace(/^[-*]\s*Headline:/i, "").trim();
+
       if (currentPlacement && primary && headline) {
         rows.push([currentPlacement, primary, headline]);
         primary = "";
@@ -172,7 +173,6 @@ const handleDownloadCSV = () => {
   link.click();
   document.body.removeChild(link);
 };
-
 
 
 
