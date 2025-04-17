@@ -129,27 +129,16 @@ const handleDownloadCSV = () => {
   let headline = "";
 
   for (const line of lines) {
-    // Version title like "### Version 1"
-    if (/^###\s*Version\s*\d+/i.test(line)) {
-      version = line.replace(/^###\s*/, "").trim();
-    }
-
-    // Placement title like "**1. Image Facebook Feed**"
-    else if (/^\*\*\d+\.\s+.+\*\*/.test(line)) {
-      placement = line.replace(/^\*\*\d+\.\s+/, "").replace(/\*\*$/, "").trim();
-    }
-
-    // Primary text line
-    else if (line.startsWith("- Primary text:")) {
-      primary = line.replace("- Primary text:", "").trim();
-    }
-
-    // Headline line
-    else if (line.startsWith("- Headline:")) {
-      headline = line.replace("- Headline:", "").trim();
-
-      // When both primary and headline are ready, push the row
-      if (primary && headline) {
+    if (/^###\s*\d+\.\s+/.test(line)) {
+      placement = line.replace(/^###\s*/, "").trim();
+    } else if (/^\*\*Ad Version \d+\*\*/.test(line)) {
+      const match = line.match(/Ad Version (\d+)/);
+      if (match) version = `Version ${match[1]}`;
+    } else if (line.startsWith("- **Primary text**:")) {
+      primary = line.replace("- **Primary text**:", "").trim();
+    } else if (line.startsWith("- **Headline**:")) {
+      headline = line.replace("- **Headline**:", "").trim();
+      if (version && placement && primary && headline) {
         rows.push([version, placement, primary, headline]);
         primary = "";
         headline = "";
@@ -174,6 +163,7 @@ const handleDownloadCSV = () => {
   link.click();
   document.body.removeChild(link);
 };
+
 
 
 
