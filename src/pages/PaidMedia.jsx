@@ -117,48 +117,48 @@ Provide a short paragraph on the reason why this ad copy has been selected follo
     }
   };
 
-  const handleDownloadCSV = () => {
-    if (!result.trim()) return;
+const handleDownloadCSV = () => {
+  if (!result.trim()) return;
 
-    const lines = result
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean);
+  const lines = result.split("\n").map(line => line.trim()).filter(Boolean);
 
-    const rows = [["Version", "Primary Text", "Headline"]];
-    let version = "";
-    let primary = "";
-    let headline = "";
+  const rows = [["Version", "Primary Text", "Headline"]];
+  let version = "";
+  let primary = "";
+  let headline = "";
 
-    for (const line of lines) {
-      if (/^Version\s*\d+/i.test(line)) {
-        version = line.trim();
-      } else if (line.startsWith("Primary text:")) {
-        primary = line.replace("Primary text:", "").trim();
-      } else if (line.startsWith("Headline:")) {
-        headline = line.replace("Headline:", "").trim();
-        // When both are ready, push a row
-        rows.push([version, primary, headline]);
-        primary = "";
-        headline = "";
-      }
+  for (const line of lines) {
+    if (/^Version\s*\d+/i.test(line)) {
+      version = line.trim();
+    } else if (line.startsWith("Primary text:")) {
+      primary = line.replace("Primary text:", "").trim();
+    } else if (line.startsWith("Headline:")) {
+      headline = line.replace("Headline:", "").trim();
+      // When both are ready, push a row
+      rows.push([version, primary, headline]);
+      primary = "";
+      headline = "";
     }
+  }
 
-    if (rows.length === 1) {
-      alert("No valid rows to export.");
-      return;
-    }
+  if (rows.length === 1) {
+    alert("No valid rows to export.");
+    return;
+  }
 
-    const csvContent = "data:text/csv;charset=utf-8," + rows.map((row) => row.map((field) => `"${field.replace(/"/g, '""')}"`).join(",")).join("\n");
+  const csvContent =
+    "data:text/csv;charset=utf-8," +
+    rows.map(row => row.map(field => `"${field.replace(/"/g, '""')}"`).join(",")).join("\n");
 
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "marketing-copy.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", "marketing-copy.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 
   return (
     <div className="p-8 max-w-xl mx-auto">
