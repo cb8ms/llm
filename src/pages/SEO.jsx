@@ -25,12 +25,7 @@ export default function SEO() {
     }
   };
 
-  const handleSubmit = async () => {
-    setResult("");
-    setLoading(true);
-
-    const promptSource = inputType === "csv" ? csvContent : url;
-    const prompt = `You are an expert in writing metadata and you will be given ${promptSource} . If it is a URL take the brand and do not change the brand in any way and feature it in the meta description. 
+  const generatePrompt = (input) => `You are an expert in writing metadata and you will be given ${input}. If it is a URL take the brand and do not change the brand in any way and feature it in the meta description. 
 
 Please provide me with ${lines} page titles in ${language} that don't exceed a maximum length of 60 characters and ${lines} meta descriptions with a maximum length of 165 characters.
 
@@ -40,22 +35,34 @@ Also, you should ${emoji} emoji's in the beginning of the sentence.
 Within your response always start with:
 I am just a "robot" so do consider the keywords that you want to target and do not copy paste my suggestions.`;
 
-    try {
-      const response = await axios.post(
-        "https://llm-backend-82gd.onrender.com/api/generate-copy",
-        { input_text: prompt },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+  const handleSubmit = async () => {
+    setResult("");
+    setLoading(true);
 
-      if (response.data.response) {
-        setResult(response.data.response);
-      } else {
-        setResult("No output received from the backend.");
+    try {
+      let inputs = inputType === "csv"
+        ? csvContent.split("\n").map(line => line.trim()).filter(Boolean)
+        : [url];
+
+      const allResults = [];
+
+      for (const input of inputs) {
+        const prompt = generatePrompt(input);
+        const response = await axios.post(
+          "https://llm-backend-82gd.onrender.com/api/generate-copy",
+          { input_text: prompt },
+          { headers: { "Content-Type": "application/json" } }
+        );
+
+        if (response.data.response) {
+          allResults.push(`For input: ${input}\n${response.data.response}\n`);
+        } else {
+          allResults.push(`For input: ${input}\nNo output received.\n`);
+        }
       }
+
+      setResult(allResults.join("\n=========================
+\n"));
     } catch (err) {
       setResult("Error generating content.");
     } finally {
@@ -81,11 +88,7 @@ I am just a "robot" so do consider the keywords that you want to target and do n
 
       <div className="mb-4">
         <label className="font-semibold mr-4">Choose Input Type:</label>
-        <select
-          className="p-2 border"
-          value={inputType}
-          onChange={(e) => setInputType(e.target.value)}
-        >
+        <select className="p-2 border" value={inputType} onChange={(e) => setInputType(e.target.value)}>
           <option value="manual">Manual Input</option>
           <option value="csv">Upload CSV</option>
         </select>
@@ -110,11 +113,7 @@ I am just a "robot" so do consider the keywords that you want to target and do n
         </div>
       )}
 
-      <select
-        className="w-full p-2 border mb-2"
-        value={language}
-        onChange={(e) => setLanguage(e.target.value)}
-      >
+      <select className="w-full p-2 border mb-2" value={language} onChange={(e) => setLanguage(e.target.value)}>
         <option>English UK</option>
         <option>English US</option>
         <option>Italian</option>
@@ -122,60 +121,27 @@ I am just a "robot" so do consider the keywords that you want to target and do n
         <option>German</option>
       </select>
 
-      <select
-        className="w-full p-2 border mb-2"
-        value={emoji}
-        onChange={(e) => setEmoji(e.target.value)}
-      >
+      <select className="w-full p-2 border mb-2" value={emoji} onChange={(e) => setEmoji(e.target.value)}>
         <option>Add</option>
         <option>Not Add</option>
       </select>
 
-      <select
-        className="w-full p-2 border mb-2"
-        value={lines}
-        onChange={(e) => setLines(Number(e.target.value))}
-      >
+      <select className="w-full p-2 border mb-2" value={lines} onChange={(e) => setLines(Number(e.target.value))}>
         <option value={5}>5</option>
         <option value={10}>10</option>
         <option value={15}>15</option>
       </select>
 
-      <button
-        className="bg-blue-500 text-white px-4 py-2 rounded"
-        onClick={handleSubmit}
-        disabled={loading}
-      >
+      <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={handleSubmit} disabled={loading}>
         Generate
       </button>
-      <button
-        className="ml-2 bg-gray-500 text-white px-4 py-2 rounded"
-        onClick={() => navigate("/")}
-      >
-        ← Back
-      </button>
+      <button className="ml-2 bg-gray-500 text-white px-4 py-2 rounded" onClick={() => navigate("/")}>← Back</button>
 
       {loading && (
         <div className="inline-flex items-center gap-2 text-blue-600 font-medium mt-2">
-          <svg
-            className="animate-spin h-4 w-4 text-blue-600"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            ></circle>
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-            ></path>
+          <svg className="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
           </svg>
           Working on it…
         </div>
@@ -184,10 +150,7 @@ I am just a "robot" so do consider the keywords that you want to target and do n
       {result && (
         <div className="mt-4">
           <pre className="bg-gray-100 p-4 whitespace-pre-wrap">{result}</pre>
-          <button
-            className="mt-2 bg-green-600 text-white px-4 py-2 rounded"
-            onClick={handleDownloadCSV}
-          >
+          <button className="mt-2 bg-green-600 text-white px-4 py-2 rounded" onClick={handleDownloadCSV}>
             Download CSV
           </button>
         </div>
