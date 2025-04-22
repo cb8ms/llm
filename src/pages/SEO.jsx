@@ -12,7 +12,7 @@ export default function SEO() {
   const [sKeyword, setsKeyword] = useState("");
   const [csvContent, setCsvContent] = useState("");
   const [language, setLanguage] = useState("English UK");
-  const [emoji, setEmoji] = useState("Sales");
+  const [emoji, setEmoji] = useState("");
   const [lines, setLines] = useState(5);
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
@@ -180,10 +180,16 @@ const handleSubmit = async () => {
         <option>German</option>
       </select>
 
-      <select className="w-full p-2 border mb-2" value={emoji} onChange={(e) => setEmoji(e.target.value)}>
-        <option value={`add`}>Add Emojis? </option>
-        <option value={`not add`}>Dont add Emojis.</option>
-      </select>
+<select
+  className="w-full p-2 border mb-2"
+  value={emoji}
+  onChange={(e) => setEmoji(e.target.value)}
+  required
+>
+  <option value="" disabled hidden>Add Emojis?</option>
+  <option value="add">Yes</option>
+  <option value="not add">No</option>
+</select>
 
       <select className="w-full p-2 border mb-2" value={lines} onChange={(e) => setLines(Number(e.target.value))}>
         <option value={5}>5</option>
