@@ -149,7 +149,7 @@ const handleSubmit = async () => {
     />
     <input
       className="w-full p-2 border mb-2"
-      placeholder="Insert Secondary keywords using comma to separate them if more than one"
+      placeholder="Insert Secondary keywords.(If more then one,use comma to separate them)"
       value={sKeyword}
       onChange={(e) => setsKeyword(e.target.value)}
     />
@@ -181,8 +181,8 @@ const handleSubmit = async () => {
       </select>
 
       <select className="w-full p-2 border mb-2" value={emoji} onChange={(e) => setEmoji(e.target.value)}>
-        <option>Add</option>
-        <option>Not Add</option>
+        <option value={`add`}>Add Emojis? </option>
+        <option value={`not add`}>Dont add Emojis.</option>
       </select>
 
       <select className="w-full p-2 border mb-2" value={lines} onChange={(e) => setLines(Number(e.target.value))}>
