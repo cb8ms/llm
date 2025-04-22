@@ -26,6 +26,117 @@ export default function PaidMedia() {
     }
   };
 
+  // Robust Export: Supports Facebook & Google Ads formats with different parsers
+
+const handleFacebookCSV = () => {
+  const lines = result
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const rows = [["Placement", "Primary Text", "Headline"]];
+
+  let currentPlacement = "";
+  let primary = "";
+  let headline = "";
+
+  for (let line of lines) {
+    const placementMatch = line.match(/^\*\*\d+\.\s*(.*?)\*\*$/);
+    if (placementMatch) {
+      currentPlacement = placementMatch[1];
+      continue;
+    }
+
+    if (/^\*Version \d+:\*/i.test(line)) continue;
+
+    const primaryMatch = line.match(/^-?\s*Primary text:\s*(.+)$/i);
+    if (primaryMatch) {
+      primary = primaryMatch[1].trim();
+      continue;
+    }
+
+    const headlineMatch = line.match(/^-?\s*Headline:\s*(.+)$/i);
+    if (headlineMatch) {
+      headline = headlineMatch[1].trim();
+      if (currentPlacement && primary && headline) {
+        rows.push([currentPlacement, primary, headline]);
+        primary = "";
+        headline = "";
+      }
+    }
+  }
+
+  return downloadAsCSV(rows, "facebook-ads.csv");
+};
+
+const handleGoogleCSV = () => {
+  const lines = result
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const rows = [["Ad Variation", "Headline 1", "Headline 2", "Description 1", "Description 2", "Path 1", "Path 2"]];
+
+  let variation = 1;
+  let h1 = "";
+  let h2 = "";
+  let d1 = "";
+  let d2 = "";
+  let p1 = "";
+  let p2 = "";
+
+  for (let line of lines) {
+    // Match lines like '| Headline (1)  | Discover Gleneagles            | (23)       |'
+    const cellMatch = line.match(/^\|\s*(Headline \(1\)|Headline \(2\)|Description \(1\)|Description \(2\)|Path \(1\)|Path \(2\))\s*\|\s*(.*?)\s*\|/i);
+    if (cellMatch) {
+      const label = cellMatch[1].toLowerCase();
+      const value = cellMatch[2].trim();
+
+      if (label === "headline (1)") h1 = value;
+      if (label === "headline (2)") h2 = value;
+      if (label === "description (1)") d1 = value;
+      if (label === "description (2)") d2 = value;
+      if (label === "path (1)") p1 = value;
+      if (label === "path (2)") p2 = value;
+
+      if (h1 && h2 && d1 && d2 && p1 && p2) {
+        rows.push([`Variation ${variation++}`, h1, h2, d1, d2, p1, p2]);
+        h1 = h2 = d1 = d2 = p1 = p2 = "";
+      }
+    }
+  }
+
+  return downloadAsCSV(rows, "google-ads.csv");
+};
+
+const handleDownloadCSV = () => {
+  if (!result.trim()) {
+    alert("No response to export.");
+    return;
+  }
+
+  if (platform === "Facebook") {
+    handleFacebookCSV();
+  } else if (platform === "Google Ads") {
+    handleGoogleCSV();
+  }
+};
+
+const downloadAsCSV = (rows, filename) => {
+  if (rows.length <= 1) {
+    alert("No valid rows to export.");
+    return;
+  }
+
+  const csvContent = "data:text/csv;charset=utf-8," + rows.map((row) => row.map((field) => `"${field.replace(/"/g, '""')}"`).join(",")).join("\n");
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
   const generatePrompt = (clientInput) => {
     if (platform === "Facebook") {
       return `You are a skilled marketing copywriter with expertise in creating compelling ads. You will need to go through the following steps to ensure the exact demands of the input values and provide ${lines} versions of each of the requested outputs.
@@ -206,6 +317,9 @@ Provide a short paragraph on the reason why this ad copy has been selected follo
       {result && (
         <div className="mt-4">
           <pre className="bg-gray-100 p-4 whitespace-pre-wrap">{result}</pre>
+          <button className="mt-2 bg-green-600 text-white px-4 py-2 rounded" onClick={handleDownloadCSV}>
+  Download CSV
+</button>;
         </div>
       )}
     </div>
