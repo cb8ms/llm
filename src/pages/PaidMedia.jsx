@@ -20,7 +20,7 @@ export default function PaidMedia() {
     setLoading(true);
 
     if (platform === "Facebook") {
-      prompt = ` You are a skilled marketing copywriter with expertise in creating compelling ads. You will need to go through the following steps to ensure the exact demands of the input values and provide ${lines} versions of each of the requested outputs.
+      prompt = `You are a skilled marketing copywriter with expertise in creating compelling ads. You will need to go through the following steps to ensure the exact demands of the input values and provide ${lines} versions of each of the requested outputs.
 
 Input Client:
 Please write the ads for ${url} and use the tone of voice of the website and try and use as many of the available characters as listed in the output format
@@ -58,9 +58,9 @@ Headline: 10 characters
 
 4. Facebook Video Feed
 Primary text: 50-150 characters
-Headline: 27 characters; `
+Headline: 27 characters`;
     } else if (platform === "Google Ads") {
-      prompt =  ` You are a skilled marketing copywriter with expertise in creating compelling ads. You will need to go through the following steps to ensure the exact demands of the input values and provide ${lines} versions of each of the requested outputs.
+      prompt = `You are a skilled marketing copywriter with expertise in creating compelling ads. You will need to go through the following steps to ensure the exact demands of the input values and provide ${lines} versions of each of the requested outputs.
 
 Input Client:
 Please write the ads for ${url} and use the tone of voice of the website and try and use as many of the available characters as listed in the output format
@@ -91,7 +91,7 @@ Path (2): 15 characters
 
 Copy paste output:
 Provide a short paragraph on the reason why this ad copy has been selected followed by a table clearly outlining the output format and suggestions. Please include the number of characters, including spaces, in brackets after each response.
-`
+`;
     }
 
     try {
@@ -184,7 +184,7 @@ const handleGoogleCSV = () => {
 
       if (h1 && h2 && d1 && d2 && p1 && p2) {
         rows.push([
-          Variation ${variation++},
+          `Variation ${variation++}`,
           h1,
           h2,
           d1,
@@ -221,7 +221,7 @@ const downloadAsCSV = (rows, filename) => {
 
   const csvContent =
     "data:text/csv;charset=utf-8," +
-    rows.map(row => row.map(field => "${field.replace(/"/g, '""')}").join(",")).join("\n");
+    rows.map(row => row.map(field => `"${field.replace(/"/g, '""')}"`).join(",")).join("\n");
 
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement("a");
