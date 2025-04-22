@@ -107,22 +107,10 @@ export default function SEO() {
       {inputType === "manual" ? (
         <input
           className="w-full p-2 border mb-2"
-          placeholder="Insert Client URL or keyword"
+          placeholder="Insert Client URL"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
         />
-      ) : (
-        <div className="border-dashed border-2 border-gray-400 p-6 mb-2 text-center">
-          <input
-            type="file"
-            accept=".csv"
-            onChange={handleFileUpload}
-            className="w-full text-center"
-          />
-          <p className="mt-2 text-gray-600">Upload a CSV file containing URLs or keywords.</p>
-        </div>
-      )}
-
 <input
           className="w-full p-2 border mb-2"
           placeholder="Insert Primary keyword"
@@ -141,6 +129,20 @@ export default function SEO() {
           value={brand}
           onChange={(e) => setBrand(e.target.value)}
         />
+
+
+      ) : (
+        <div className="border-dashed border-2 border-gray-400 p-6 mb-2 text-center">
+          <input
+            type="file"
+            accept=".csv"
+            onChange={handleFileUpload}
+            className="w-full text-center"
+          />
+          <p className="mt-2 text-gray-600">Upload a CSV file containing URLs or keywords.</p>
+        </div>
+      )}
+
 
       <select className="w-full p-2 border mb-2" value={language} onChange={(e) => setLanguage(e.target.value)}>
         <option>English UK</option>
