@@ -1,5 +1,6 @@
 // /components/SEO.js
 import axios from "axios";
+import Papa from "papaparse";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -10,7 +11,6 @@ export default function SEO() {
   const [brand, setBrand] = useState("");
   const [pKeyword, setPkeyword] = useState("");
   const [sKeyword, setsKeyword] = useState("");
-  const [csvContent, setCsvContent] = useState("");
   const [language, setLanguage] = useState("English UK");
   const [emoji, setEmoji] = useState("");
   const [lines, setLines] = useState(5);
@@ -22,47 +22,28 @@ export default function SEO() {
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
-    if (file && file.type === "text/csv") {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const lines = e.target.result
-          .split("\n")
-          .map((line) => line.trim())
-          .filter(Boolean);
-        const [headerLine, ...rows] = lines;
+    if (!file || file.type !== "text/csv") {
+      alert("Please upload a valid CSV file.");
+      return;
+    }
 
-        const headers = headerLine.split(",").map((h) => h.trim().toLowerCase());
-
-        const expectedHeaders = ["url", "primary keyword", "secondary keyword", "brand"];
-        const headerIndices = expectedHeaders.map((h) => headers.indexOf(h));
-
-        if (headerIndices.includes(-1)) {
-          alert("CSV is missing one or more required columns: URL, Primary Keyword, Secondary Keyword, Brand.");
-          return;
-        }
-
-        const parsedRows = rows.map((row) => {
-          const values = row.split(",").map((val) => val.trim());
-          const rowData = {};
-
-          expectedHeaders.forEach((header, i) => {
-            rowData[header] = values[headerIndices[i]] || "";
-          });
-
-          return {
-            url: rowData["url"],
-            pKeyword: rowData["primary keyword"],
-            sKeyword: rowData["secondary keyword"], // Keep commas intact
-            brand: rowData["brand"],
-          };
-        });
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: function (results) {
+        const parsedRows = results.data.map((row) => ({
+          url: row["URL"]?.trim() || "",
+          pKeyword: row["Primary Keyword"]?.trim() || "",
+          sKeyword: row["Secondary Keyword"]?.trim() || "",
+          brand: row["Brand"]?.trim() || "",
+        }));
 
         setCsvRows(parsedRows);
-      };
-      reader.readAsText(file);
-    } else {
-      alert("Please upload a valid CSV file.");
-    }
+      },
+      error: function () {
+        alert("Failed to parse CSV. Please check the format.");
+      }
+    });
   };
 
   const generatePrompt = ({ url, pKeyword, sKeyword, brand }) => {
@@ -91,7 +72,9 @@ export default function SEO() {
     setProgress({ current: 0, total: 0 });
 
     try {
-      const inputs = inputType === "csv" ? csvRows : [{ url, pKeyword, sKeyword, brand }];
+      const inputs = inputType === "csv"
+        ? csvRows
+        : [{ url, pKeyword, sKeyword, brand }];
 
       setProgress({ current: 0, total: inputs.length });
 
@@ -101,7 +84,11 @@ export default function SEO() {
         const input = inputs[i];
         const prompt = generatePrompt(input);
 
-        const response = await axios.post("https://llm-backend-82gd.onrender.com/api/generate-copy", { input_text: prompt }, { headers: { "Content-Type": "application/json" } });
+        const response = await axios.post(
+          "https://llm-backend-82gd.onrender.com/api/generate-copy",
+          { input_text: prompt },
+          { headers: { "Content-Type": "application/json" } }
+        );
 
         if (response.data.response) {
           allResults.push(`For input: ${input.url}\n${response.data.response}\n`);
@@ -146,15 +133,40 @@ export default function SEO() {
 
       {inputType === "manual" ? (
         <>
-          <input className="w-full p-2 border mb-2" placeholder="Insert Client URL" value={url} onChange={(e) => setUrl(e.target.value)} />
-          <input className="w-full p-2 border mb-2" placeholder="Insert Primary keyword" value={pKeyword} onChange={(e) => setpKeyword(e.target.value)} />
-          <input className="w-full p-2 border mb-2" placeholder="Insert Secondary keywords.(If more then one,use comma to separate them)" value={sKeyword} onChange={(e) => setsKeyword(e.target.value)} />
-          <input className="w-full p-2 border mb-2" placeholder="Insert Client Brand name here" value={brand} onChange={(e) => setBrand(e.target.value)} />
+          <input
+            className="w-full p-2 border mb-2"
+            placeholder="Insert Client URL"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+          />
+          <input
+            className="w-full p-2 border mb-2"
+            placeholder="Insert Primary keyword"
+            value={pKeyword}
+            onChange={(e) => setPkeyword(e.target.value)}
+          />
+          <input
+            className="w-full p-2 border mb-2"
+            placeholder="Insert Secondary keywords (comma separated)"
+            value={sKeyword}
+            onChange={(e) => setsKeyword(e.target.value)}
+          />
+          <input
+            className="w-full p-2 border mb-2"
+            placeholder="Insert Client Brand name here"
+            value={brand}
+            onChange={(e) => setBrand(e.target.value)}
+          />
         </>
       ) : (
         <div className="border-dashed border-2 border-gray-400 p-6 mb-2 text-center">
-          <input type="file" accept=".csv" onChange={handleFileUpload} className="w-full text-center" />
-          <p className="mt-2 text-gray-600">Upload a CSV file containing URLs or keywords.</p>
+          <input
+            type="file"
+            accept=".csv"
+            onChange={handleFileUpload}
+            className="w-full text-center"
+          />
+          <p className="mt-2 text-gray-600">Upload a CSV file with headers: URL, Primary Keyword, Secondary Keyword, Brand.</p>
         </div>
       )}
 
@@ -166,10 +178,13 @@ export default function SEO() {
         <option>German</option>
       </select>
 
-      <select className="w-full p-2 border mb-2" value={emoji} onChange={(e) => setEmoji(e.target.value)} required>
-        <option value="" disabled hidden>
-          Add Emojis?
-        </option>
+      <select
+        className="w-full p-2 border mb-2"
+        value={emoji}
+        onChange={(e) => setEmoji(e.target.value)}
+        required
+      >
+        <option value="" disabled hidden>Add Emojis?</option>
         <option value="add">Yes</option>
         <option value="not add">No</option>
       </select>
@@ -183,9 +198,7 @@ export default function SEO() {
       <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={handleSubmit} disabled={loading}>
         Generate
       </button>
-      <button className="ml-2 bg-gray-500 text-white px-4 py-2 rounded" onClick={() => navigate("/")}>
-        ← Back
-      </button>
+      <button className="ml-2 bg-gray-500 text-white px-4 py-2 rounded" onClick={() => navigate("/")}>← Back</button>
 
       {loading && (
         <div className="inline-flex items-center gap-2 text-blue-600 font-medium mt-2">
