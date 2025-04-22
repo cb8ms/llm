@@ -54,16 +54,23 @@ const handleFileUpload = (event) => {
 
 const generatePrompt = ({ url, pKeyword, sKeyword, brand }) => {
   return (
-    `You are an expert in writing metadata and you will be given the following input:\n\n` +
-    `- URL: ${url}\n` +
-    `- Primary Keyword: ${pKeyword}\n` +
-    `- Secondary Keyword(s): ${sKeyword}\n` +
-    `- Brand: ${brand}\n\n` +
-    `Please provide me with ${lines} page titles in ${language} that don't exceed a maximum length of 60 characters and ${lines} meta descriptions with a maximum length of 165 characters.\n\n` +
-    `Write the titles and meta descriptions in a way that will entice the user to click through including the brand in the meta description but not in the title. Please include the number of characters, including spaces, in brackets after each response.\n` +
-    `Also, you should ${emoji} emoji's in the beginning of the sentence.\n\n` +
-    `Within your response always start with:\n` +
-    `I am just a "robot" so do consider the keywords that you want to target and do not copy paste my suggestions.`
+    `You are an expert in writing metadata and you will be given the following input:
+
+    - URL: ${url}
+    - Primary Keyword: ${pKeyword}
+    - Secondary Keyword(s): ${sKeyword}
+    - Brand: ${brand}
+
+    Using the ${url} as the website URL for Tone of Voice.
+
+    Please provide me with ${lines} page titles in ${language} that don't exceed a maximum length of 60 characters and ${lines} meta descriptions with a maximum length of 165 characters.
+
+    Write the titles and meta descriptions for the ${brand} by using the ${pKeyword} as the primary Keyword but also ${sKeyword} as your secondary Keyword(s), in a way that will entice the user to click through including the brand in the meta description but not in the title. Please include the number of characters, including spaces, in brackets after each response.
+
+    Also, you should ${emoji} emoji's in the beginning of the sentence.
+
+    Within your response always start with:
+    I am just a "robot" so do consider the keywords that you want to target and do not copy paste my suggestions.`
   );
 };
 
