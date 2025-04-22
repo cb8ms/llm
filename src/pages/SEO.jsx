@@ -7,6 +7,9 @@ export default function SEO() {
   const navigate = useNavigate();
   const [inputType, setInputType] = useState("manual");
   const [url, setUrl] = useState("");
+  const [brand, setBrand] = useState("");
+  const [pKeyword, setPkeyword] = useState("");
+  const [sKeyword, setsKeyword] = useState("");
   const [csvContent, setCsvContent] = useState("");
   const [language, setLanguage] = useState("English UK");
   const [emoji, setEmoji] = useState("Sales");
@@ -119,6 +122,25 @@ export default function SEO() {
           <p className="mt-2 text-gray-600">Upload a CSV file containing URLs or keywords.</p>
         </div>
       )}
+
+<input
+          className="w-full p-2 border mb-2"
+          placeholder="Insert Primary keyword"
+          value={pKeyword}
+          onChange={(e) => setpKeyword(e.target.value)}
+        />
+                <input
+          className="w-full p-2 border mb-2"
+          placeholder="Insert Secondary keywords using comma to separate them if more then one"
+          value={sKeyword}
+          onChange={(e) => setsKeyword(e.target.value)}
+        />
+                <input
+          className="w-full p-2 border mb-2"
+          placeholder="Insert Client Brand name here"
+          value={brand}
+          onChange={(e) => setBrand(e.target.value)}
+        />
 
       <select className="w-full p-2 border mb-2" value={language} onChange={(e) => setLanguage(e.target.value)}>
         <option>English UK</option>
