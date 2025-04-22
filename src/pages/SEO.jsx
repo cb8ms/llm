@@ -25,7 +25,16 @@ export default function SEO() {
     }
   };
 
-  const generatePrompt = (input) => `You are an expert in writing metadata and you will be given ${input}. If it is a URL take the brand and do not change the brand in any way and feature it in the meta description.\n\nPlease provide me with ${lines} page titles in ${language} that don't exceed a maximum length of 60 characters and ${lines} meta descriptions with a maximum length of 165 characters.\n\nWrite the titles and meta descriptions in a way that will entice the user to click through including the brand in the meta description but not in the title. Please include the number of characters, including spaces, in brackets after each response.\nAlso, you should ${emoji} emoji's in the beginning of the sentence.\n\nWithin your response always start with:\nI am just a \"robot\" so do consider the keywords that you want to target and do not copy paste my suggestions.`;
+  const generatePrompt = (input) => {
+    return (
+      `You are an expert in writing metadata and you will be given ${input}. If it is a URL take the brand and do not change the brand in any way and feature it in the meta description.\n\n` +
+      `Please provide me with ${lines} page titles in ${language} that don't exceed a maximum length of 60 characters and ${lines} meta descriptions with a maximum length of 165 characters.\n\n` +
+      `Write the titles and meta descriptions in a way that will entice the user to click through including the brand in the meta description but not in the title. Please include the number of characters, including spaces, in brackets after each response.\n` +
+      `Also, you should ${emoji} emoji's in the beginning of the sentence.\n\n` +
+      `Within your response always start with:\n` +
+      `I am just a "robot" so do consider the keywords that you want to target and do not copy paste my suggestions.`
+    );
+  };
 
   const handleSubmit = async () => {
     setResult("");
@@ -53,8 +62,7 @@ export default function SEO() {
         }
       }
 
-      setResult(allResults.join("\n=========================
-\n"));
+      setResult(allResults.join("\n=========================\n\n"));
     } catch (err) {
       setResult("Error generating content.");
     } finally {
