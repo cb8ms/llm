@@ -1,6 +1,5 @@
 // /components/SEO.js
 import axios from "axios";
-import Papa from "papaparse";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -20,31 +19,35 @@ export default function SEO() {
 
   const [csvRows, setCsvRows] = useState([]);
 
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (!file || file.type !== "text/csv") {
-      alert("Please upload a valid CSV file.");
-      return;
-    }
+ const handleFileUpload = async (event) => {
+  const file = event.target.files[0];
+  if (!file || file.type !== "text/csv") {
+    alert("Please upload a valid CSV file.");
+    return;
+  }
 
-    Papa.parse(file, {
+  const Papa = await import("https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js");
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const csvText = e.target.result;
+    const results = Papa.parse(csvText, {
       header: true,
-      skipEmptyLines: true,
-      complete: function (results) {
-        const parsedRows = results.data.map((row) => ({
-          url: row["URL"]?.trim() || "",
-          pKeyword: row["Primary Keyword"]?.trim() || "",
-          sKeyword: row["Secondary Keyword"]?.trim() || "",
-          brand: row["Brand"]?.trim() || "",
-        }));
-
-        setCsvRows(parsedRows);
-      },
-      error: function () {
-        alert("Failed to parse CSV. Please check the format.");
-      }
+      skipEmptyLines: true
     });
+
+    const parsedRows = results.data.map((row) => ({
+      url: row["URL"]?.trim() || "",
+      pKeyword: row["Primary Keyword"]?.trim() || "",
+      sKeyword: row["Secondary Keyword"]?.trim() || "",
+      brand: row["Brand"]?.trim() || "",
+    }));
+
+    setCsvRows(parsedRows);
   };
+
+  reader.readAsText(file);
+};
 
   const generatePrompt = ({ url, pKeyword, sKeyword, brand }) => {
     return `You are an expert in writing metadata and you will be given the following input:
