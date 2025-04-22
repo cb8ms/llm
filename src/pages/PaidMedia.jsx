@@ -1,13 +1,10 @@
-// /components/PaidMedia.js
 import axios from "axios";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function PaidMedia() {
   const navigate = useNavigate();
-  const [inputType, setInputType] = useState("manual");
   const [url, setUrl] = useState("");
-  const [csvContent, setCsvContent] = useState("");
   const [platform, setPlatform] = useState("Facebook");
   const [language, setLanguage] = useState("English UK");
   const [objective, setObjective] = useState("Sales");
@@ -15,24 +12,115 @@ export default function PaidMedia() {
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (file && file.type === "text/csv") {
-      const reader = new FileReader();
-      reader.onload = (e) => setCsvContent(e.target.result);
-      reader.readAsText(file);
-    } else {
-      alert("Please upload a valid CSV file.");
+  const handleSubmit = async () => {
+    let prompt = "";
+
+    // Clear the previous result and show loader
+    setResult("");
+    setLoading(true);
+
+    if (platform === "Facebook") {
+      prompt = You are a skilled marketing copywriter with expertise in creating compelling ads. You will need to go through the following steps to ensure the exact demands of the input values and provide ${lines} versions of each of the requested outputs.
+
+Input Client:
+Please write the ads for ${url} and use the tone of voice of the website and try and use as many of the available characters as listed in the output format
+
+Input Language:
+Please write the ads in the correct spelling and grammar of ${language}
+
+Input Key Marketing Objective:
+The objective of the ads is to ${objective}
+
+If it is Sales then you will sell the product to the user and should contain as much direct information about the product.
+If it is Awareness then you will generate awareness for the product.
+
+#########
+
+Facebook prompt:
+1. Hook/Opening Line: Must capture attention quickly within the primary text
+2. Do not exceed the character limit below in the output format
+3. Compliance: No exaggerated claims or anything that cannot be found on the provided URL, if pricing is available please include this in the primary text.
+
+**Output Format**
+Provide the following formats below clearly annotating which ad text is for the placement
+
+1. Image Facebook Feed
+Primary text: 50-150 characters
+Headline: 27 characters
+
+2. Facebook Stories
+Primary text: 125 characters
+Headline: 40 characters
+
+3. Facebook Reels
+Primary text: 72 characters
+Headline: 10 characters
+
+4. Facebook Video Feed
+Primary text: 50-150 characters
+Headline: 27 characters;
+    } else if (platform === "Google Ads") {
+      prompt = You are a skilled marketing copywriter with expertise in creating compelling ads. You will need to go through the following steps to ensure the exact demands of the input values and provide ${lines} versions of each of the requested outputs.
+
+Input Client:
+Please write the ads for ${url} and use the tone of voice of the website and try and use as many of the available characters as listed in the output format
+
+Input Language:
+Please write the ads in the correct spelling and grammar of ${language}
+
+Input Key Marketing Objective:
+The objective of the ads is to ${objective}
+
+If it is Sales then you will sell the product to the user and should contain as much direct information about the product.
+If it is Awareness then you will generate awareness for the product.
+
+#########
+
+Google Ads prompt:
+1. Hook/Opening Line: Must capture attention quickly within the headlines
+2. Do not exceed the character limit below in the output format
+3. Compliance: No exaggerated claims or anything that cannot be found on the provided URL, if pricing is available please include this in the primary text.
+
+**Output Format**
+Headline (1): 30 characters
+Headline (2): 30 characters
+Description (1): 90 characters
+Description (2): 90 characters
+Path (1): 15 characters 
+Path (2): 15 characters 
+
+Copy paste output:
+Provide a short paragraph on the reason why this ad copy has been selected followed by a table clearly outlining the output format and suggestions. Please include the number of characters, including spaces, in brackets after each response.
+;
+    }
+
+    try {
+      const response = await axios.post(
+        "https://llm-backend-82gd.onrender.com/api/generate-copy",
+        { input_text: prompt },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data.response) {
+        setResult(response.data.response);
+      } else {
+        setResult("No output received from the backend.");
+      }
+    } catch (err) {
+      setResult("Error generating content.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Robust Export: Supports Facebook & Google Ads formats with different parsers
+// Robust Export: Supports Facebook & Google Ads formats with different parsers
 
 const handleFacebookCSV = () => {
-  const lines = result
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
+  const lines = result.split("\n").map(line => line.trim()).filter(Boolean);
   const rows = [["Placement", "Primary Text", "Headline"]];
 
   let currentPlacement = "";
@@ -69,10 +157,7 @@ const handleFacebookCSV = () => {
 };
 
 const handleGoogleCSV = () => {
-  const lines = result
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
+  const lines = result.split("\n").map(line => line.trim()).filter(Boolean);
   const rows = [["Ad Variation", "Headline 1", "Headline 2", "Description 1", "Description 2", "Path 1", "Path 2"]];
 
   let variation = 1;
@@ -98,7 +183,15 @@ const handleGoogleCSV = () => {
       if (label === "path (2)") p2 = value;
 
       if (h1 && h2 && d1 && d2 && p1 && p2) {
-        rows.push([`Variation ${variation++}`, h1, h2, d1, d2, p1, p2]);
+        rows.push([
+          Variation ${variation++},
+          h1,
+          h2,
+          d1,
+          d2,
+          p1,
+          p2
+        ]);
         h1 = h2 = d1 = d2 = p1 = p2 = "";
       }
     }
@@ -126,7 +219,9 @@ const downloadAsCSV = (rows, filename) => {
     return;
   }
 
-  const csvContent = "data:text/csv;charset=utf-8," + rows.map((row) => row.map((field) => `"${field.replace(/"/g, '""')}"`).join(",")).join("\n");
+  const csvContent =
+    "data:text/csv;charset=utf-8," +
+    rows.map(row => row.map(field => "${field.replace(/"/g, '""')}").join(",")).join("\n");
 
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement("a");
@@ -137,144 +232,12 @@ const downloadAsCSV = (rows, filename) => {
   document.body.removeChild(link);
 };
 
-  const generatePrompt = (clientInput) => {
-    if (platform === "Facebook") {
-      return `You are a skilled marketing copywriter with expertise in creating compelling ads. You will need to go through the following steps to ensure the exact demands of the input values and provide ${lines} versions of each of the requested outputs.
-
-Input Client:
-Please write the ads for ${clientInput} and use the tone of voice of the website and try and use as many of the available characters as listed in the output format
-
-Input Language:
-Please write the ads in the correct spelling and grammar of ${language}
-
-Input Key Marketing Objective:
-The objective of the ads is to ${objective}
-
-If it is Sales then you will sell the product to the user and should contain as much direct information about the product.
-If it is Awareness then you will generate awareness for the product.
-
-#########
-
-Facebook prompt:
-1. Hook/Opening Line: Must capture attention quickly within the primary text
-2. Do not exceed the character limit below in the output format
-3. Compliance: No exaggerated claims or anything that cannot be found on the provided URL, if pricing is available please include this in the primary text.
-
-**Output Format**
-1. Image Facebook Feed
-Primary text: 50-150 characters
-Headline: 27 characters
-
-2. Facebook Stories
-Primary text: 125 characters
-Headline: 40 characters
-
-3. Facebook Reels
-Primary text: 72 characters
-Headline: 10 characters
-
-4. Facebook Video Feed
-Primary text: 50-150 characters
-Headline: 27 characters`;
-    } else {
-      return `You are a skilled marketing copywriter with expertise in creating compelling ads. You will need to go through the following steps to ensure the exact demands of the input values and provide ${lines} versions of each of the requested outputs.
-
-Input Client:
-Please write the ads for ${clientInput} and use the tone of voice of the website and try and use as many of the available characters as listed in the output format
-
-Input Language:
-Please write the ads in the correct spelling and grammar of ${language}
-
-Input Key Marketing Objective:
-The objective of the ads is to ${objective}
-
-If it is Sales then you will sell the product to the user and should contain as much direct information about the product.
-If it is Awareness then you will generate awareness for the product.
-
-#########
-
-Google Ads prompt:
-1. Hook/Opening Line: Must capture attention quickly within the headlines
-2. Do not exceed the character limit below in the output format
-3. Compliance: No exaggerated claims or anything that cannot be found on the provided URL, if pricing is available please include this in the primary text.
-
-**Output Format**
-Headline (1): 30 characters
-Headline (2): 30 characters
-Description (1): 90 characters
-Description (2): 90 characters
-Path (1): 15 characters 
-Path (2): 15 characters 
-
-Copy paste output:
-Provide a short paragraph on the reason why this ad copy has been selected followed by a table clearly outlining the output format and suggestions. Please include the number of characters, including spaces, in brackets after each response.`;
-    }
-  };
-
-  const handleSubmit = async () => {
-    setResult("");
-    setLoading(true);
-
-    try {
-      let inputs = inputType === "csv"
-        ? csvContent.split("\n").map(line => line.trim()).filter(Boolean)
-        : [url];
-
-      const allResults = [];
-
-      for (const input of inputs) {
-        const prompt = generatePrompt(input);
-        const response = await axios.post(
-          "https://llm-backend-82gd.onrender.com/api/generate-copy",
-          { input_text: prompt },
-          { headers: { "Content-Type": "application/json" } }
-        );
-
-        if (response.data.response) {
-          allResults.push(`For input: ${input}\n${response.data.response}\n`);
-        } else {
-          allResults.push(`For input: ${input}\nNo output received.\n`);
-        }
-      }
-
-      setResult(allResults.join("\n=========================\n\n"));
-    } catch (err) {
-      setResult("Error generating content.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="p-8 max-w-xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Paid Media Marketing Copy Generator</h1>
 
-      <div className="mb-4">
-        <label className="font-semibold mr-4">Choose Input Type:</label>
-        <select className="p-2 border" value={inputType} onChange={(e) => setInputType(e.target.value)}>
-          <option value="manual">Manual Input</option>
-          <option value="csv">Upload CSV</option>
-        </select>
-      </div>
-
-      {inputType === "manual" ? (
-        <input
-          className="w-full p-2 border mb-2"
-          placeholder="Client URL or keyword"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-        />
-      ) : (
-        <div className="border-dashed border-2 border-gray-400 p-6 mb-2 text-center">
-          <input
-            type="file"
-            accept=".csv"
-            onChange={handleFileUpload}
-            className="w-full text-center"
-          />
-          <p className="mt-2 text-gray-600">Upload a CSV file containing URLs or keywords.</p>
-        </div>
-      )}
+      <input className="w-full p-2 border mb-2" placeholder="Client URL or keyword" value={url} onChange={(e) => setUrl(e.target.value)} />
 
       <select className="w-full p-2 border mb-2" value={language} onChange={(e) => setLanguage(e.target.value)}>
         <option>English UK</option>
@@ -302,7 +265,9 @@ Provide a short paragraph on the reason why this ad copy has been selected follo
       <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={handleSubmit} disabled={loading}>
         Generate
       </button>
-      <button className="ml-2 bg-gray-500 text-white px-4 py-2 rounded" onClick={() => navigate("/")}>← Back</button>
+      <button className="ml-2 bg-gray-500 text-white px-4 py-2 rounded" onClick={() => navigate("/")}>
+        ← Back
+      </button>
 
       {loading && (
         <div className="inline-flex items-center gap-2 text-blue-600 font-medium mt-2">
@@ -318,8 +283,8 @@ Provide a short paragraph on the reason why this ad copy has been selected follo
         <div className="mt-4">
           <pre className="bg-gray-100 p-4 whitespace-pre-wrap">{result}</pre>
           <button className="mt-2 bg-green-600 text-white px-4 py-2 rounded" onClick={handleDownloadCSV}>
-  Download CSV
-</button>;
+            Download CSV
+          </button>
         </div>
       )}
     </div>
