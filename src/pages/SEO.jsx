@@ -1,5 +1,6 @@
 // /components/SEO.js
 import axios from "axios";
+import Papa from "papaparse";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -19,54 +20,46 @@ export default function SEO() {
 
   const [csvRows, setCsvRows] = useState([]);
 
- const handleFileUpload = async (event) => {
-  const file = event.target.files[0];
-  if (!file || file.type !== "text/csv") {
-    alert("Please upload a valid CSV file.");
-    return;
-  }
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file || file.type !== "text/csv") {
+      alert("Please upload a valid CSV file.");
+      return;
+    }
 
-  const Papa = await import("https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js");
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const csvText = e.target.result;
-    const results = Papa.parse(csvText, {
+    Papa.parse(file, {
       header: true,
-      skipEmptyLines: true
+      skipEmptyLines: true,
+      complete: function (results) {
+        const parsedRows = results.data.map((row) => ({
+          url: row["URL"]?.trim() || "",
+          pKeyword: row["Primary Keyword"]?.trim() || "",
+          sKeyword: row["Secondary Keyword"]?.trim() || "",
+          brand: row["Brand"]?.trim() || "",
+        }));
+
+        setCsvRows(parsedRows);
+      },
+      error: function () {
+        alert("Failed to parse CSV. Please check the format.");
+      }
     });
-
-    const parsedRows = results.data.map((row) => ({
-      url: row["URL"]?.trim() || "",
-      pKeyword: row["Primary Keyword"]?.trim() || "",
-      sKeyword: row["Secondary Keyword"]?.trim() || "",
-      brand: row["Brand"]?.trim() || "",
-    }));
-
-    setCsvRows(parsedRows);
   };
 
-  reader.readAsText(file);
-};
-
   const generatePrompt = ({ url, pKeyword, sKeyword, brand }) => {
-    return `You are an expert in writing metadata and you will be given the following input:
-
-    - URL: ${url}
-    - Primary Keyword: ${pKeyword}
-    - Secondary Keyword(s): ${sKeyword}
-    - Brand: ${brand}
-
-    Using the ${url} as the website URL for Tone of Voice.
-
-    Please provide me with ${lines} page titles in ${language} that don't exceed a maximum length of 60 characters and ${lines} meta descriptions with a maximum length of 165 characters.
-
-    Write the titles and meta descriptions for the ${brand} by using the ${pKeyword} as the primary Keyword but also ${sKeyword} as your secondary Keyword(s), in a way that will entice the user to click through including the brand in the meta description but not in the title. Please include the number of characters, including spaces, in brackets after each response.
-
-    Also, you should ${emoji} emoji's in the beginning of the sentence.
-
-    Within your response always start with:
-    I am just a "robot" so do consider the keywords that you want to target and do not copy paste my suggestions.`;
+    return (
+      `You are an expert in writing metadata and you will be given the following input:\n\n` +
+      `- URL: ${url}\n` +
+      `- Primary Keyword: ${pKeyword}\n` +
+      `- Secondary Keyword(s): ${sKeyword}\n` +
+      `- Brand: ${brand}\n\n` +
+      `Using the ${url} as the website URL for Tone of Voice.\n\n` +
+      `Please provide me with ${lines} page titles in ${language} that don't exceed a maximum length of 60 characters and ${lines} meta descriptions with a maximum length of 165 characters.\n\n` +
+      `Write the titles and meta descriptions for the ${brand} by using the ${pKeyword} as the primary Keyword but also ${sKeyword} as your secondary Keyword(s), in a way that will entice the user to click through including the brand in the meta description but not in the title. Please include the number of characters, including spaces, in brackets after each response.\n\n` +
+      `Also, you should ${emoji} emoji's in the beginning of the sentence.\n\n` +
+      `Within your response always start with:\n` +
+      `I am just a "robot" so do consider the keywords that you want to target and do not copy paste my suggestions.`
+    );
   };
 
   const handleSubmit = async () => {
