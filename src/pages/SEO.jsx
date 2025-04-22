@@ -18,67 +18,96 @@ export default function SEO() {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
 
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (file && file.type === "text/csv") {
-      const reader = new FileReader();
-      reader.onload = (e) => setCsvContent(e.target.result);
-      reader.readAsText(file);
-    } else {
-      alert("Please upload a valid CSV file.");
-    }
-  };
+  const [csvRows, setCsvRows] = useState([]);
 
-  const generatePrompt = (input) => {
-    return (
-      `You are an expert in writing metadata and you will be given ${input}. If it is a URL take the brand and do not change the brand in any way and feature it in the meta description.\n\n` +
-      `Please provide me with ${lines} page titles in ${language} that don't exceed a maximum length of 60 characters and ${lines} meta descriptions with a maximum length of 165 characters.\n\n` +
-      `Write the titles and meta descriptions in a way that will entice the user to click through including the brand in the meta description but not in the title. Please include the number of characters, including spaces, in brackets after each response.\n` +
-      `Also, you should ${emoji} emoji's in the beginning of the sentence.\n\n` +
-      `Within your response always start with:\n` +
-      `I am just a "robot" so do consider the keywords that you want to target and do not copy paste my suggestions.`
-    );
-  };
+const handleFileUpload = (event) => {
+  const file = event.target.files[0];
+  if (file && file.type === "text/csv") {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const lines = e.target.result.split("\n").map(l => l.trim()).filter(Boolean);
+      const [headerLine, ...rows] = lines;
+      const headers = headerLine.split(",").map(h => h.trim().toLowerCase());
 
-  const handleSubmit = async () => {
-    setResult("");
-    setLoading(true);
-    setProgress({ current: 0, total: 0 });
+      const parsedRows = rows.map(row => {
+        const values = row.split(",").map(v => v.trim());
+        const rowData = {};
+        headers.forEach((header, i) => {
+          rowData[header] = values[i] || "";
+        });
+        return {
+          url: rowData["url"] || "",
+          pKeyword: rowData["primary keyword"] || "",
+          sKeyword: rowData["secondary keyword"] || "",
+          brand: rowData["brand"] || "",
+        };
+      });
 
-    try {
-      let inputs = inputType === "csv"
-        ? csvContent.split("\n").map(line => line.trim()).filter(Boolean)
-        : [url];
+      setCsvRows(parsedRows);
+    };
+    reader.readAsText(file);
+  } else {
+    alert("Please upload a valid CSV file.");
+  }
+};
 
-      setProgress({ current: 0, total: inputs.length });
 
-      const allResults = [];
+const generatePrompt = ({ url, pKeyword, sKeyword, brand }) => {
+  return (
+    `You are an expert in writing metadata and you will be given the following input:\n\n` +
+    `- URL: ${url}\n` +
+    `- Primary Keyword: ${pKeyword}\n` +
+    `- Secondary Keyword(s): ${sKeyword}\n` +
+    `- Brand: ${brand}\n\n` +
+    `Please provide me with ${lines} page titles in ${language} that don't exceed a maximum length of 60 characters and ${lines} meta descriptions with a maximum length of 165 characters.\n\n` +
+    `Write the titles and meta descriptions in a way that will entice the user to click through including the brand in the meta description but not in the title. Please include the number of characters, including spaces, in brackets after each response.\n` +
+    `Also, you should ${emoji} emoji's in the beginning of the sentence.\n\n` +
+    `Within your response always start with:\n` +
+    `I am just a "robot" so do consider the keywords that you want to target and do not copy paste my suggestions.`
+  );
+};
 
-      for (let i = 0; i < inputs.length; i++) {
-        const input = inputs[i];
-        const prompt = generatePrompt(input);
-        const response = await axios.post(
-          "https://llm-backend-82gd.onrender.com/api/generate-copy",
-          { input_text: prompt },
-          { headers: { "Content-Type": "application/json" } }
-        );
 
-        if (response.data.response) {
-          allResults.push(`For input: ${input}\n${response.data.response}\n`);
-        } else {
-          allResults.push(`For input: ${input}\nNo output received.\n`);
-        }
+const handleSubmit = async () => {
+  setResult("");
+  setLoading(true);
+  setProgress({ current: 0, total: 0 });
 
-        setProgress((prev) => ({ ...prev, current: i + 1 }));
+  try {
+    const inputs = inputType === "csv"
+      ? csvRows
+      : [{ url, pKeyword, sKeyword, brand }];
+
+    setProgress({ current: 0, total: inputs.length });
+
+    const allResults = [];
+
+    for (let i = 0; i < inputs.length; i++) {
+      const input = inputs[i];
+      const prompt = generatePrompt(input);
+
+      const response = await axios.post(
+        "https://llm-backend-82gd.onrender.com/api/generate-copy",
+        { input_text: prompt },
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+      if (response.data.response) {
+        allResults.push(`For input: ${input.url}\n${response.data.response}\n`);
+      } else {
+        allResults.push(`For input: ${input.url}\nNo output received.\n`);
       }
 
-      setResult(allResults.join("\n=========================\n\n"));
-    } catch (err) {
-      setResult("Error generating content.");
-    } finally {
-      setLoading(false);
+      setProgress((prev) => ({ ...prev, current: i + 1 }));
     }
-  };
+
+    setResult(allResults.join("\n=========================\n\n"));
+  } catch (err) {
+    setResult("Error generating content.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleDownloadCSV = () => {
     const lines = result.split("\n").filter((line) => line.trim() !== "");
