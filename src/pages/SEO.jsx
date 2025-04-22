@@ -105,44 +105,43 @@ export default function SEO() {
       </div>
 
       {inputType === "manual" ? (
-        <input
-          className="w-full p-2 border mb-2"
-          placeholder="Insert Client URL"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-        />
-<input
-          className="w-full p-2 border mb-2"
-          placeholder="Insert Primary keyword"
-          value={pKeyword}
-          onChange={(e) => setpKeyword(e.target.value)}
-        />
-                <input
-          className="w-full p-2 border mb-2"
-          placeholder="Insert Secondary keywords using comma to separate them if more then one"
-          value={sKeyword}
-          onChange={(e) => setsKeyword(e.target.value)}
-        />
-                <input
-          className="w-full p-2 border mb-2"
-          placeholder="Insert Client Brand name here"
-          value={brand}
-          onChange={(e) => setBrand(e.target.value)}
-        />
-
-
-      ) : (
-        <div className="border-dashed border-2 border-gray-400 p-6 mb-2 text-center">
-          <input
-            type="file"
-            accept=".csv"
-            onChange={handleFileUpload}
-            className="w-full text-center"
-          />
-          <p className="mt-2 text-gray-600">Upload a CSV file containing URLs or keywords.</p>
-        </div>
-      )}
-
+  <>
+    <input
+      className="w-full p-2 border mb-2"
+      placeholder="Insert Client URL"
+      value={url}
+      onChange={(e) => setUrl(e.target.value)}
+    />
+    <input
+      className="w-full p-2 border mb-2"
+      placeholder="Insert Primary keyword"
+      value={pKeyword}
+      onChange={(e) => setpKeyword(e.target.value)}
+    />
+    <input
+      className="w-full p-2 border mb-2"
+      placeholder="Insert Secondary keywords using comma to separate them if more than one"
+      value={sKeyword}
+      onChange={(e) => setsKeyword(e.target.value)}
+    />
+    <input
+      className="w-full p-2 border mb-2"
+      placeholder="Insert Client Brand name here"
+      value={brand}
+      onChange={(e) => setBrand(e.target.value)}
+    />
+  </>
+) : (
+  <div className="border-dashed border-2 border-gray-400 p-6 mb-2 text-center">
+    <input
+      type="file"
+      accept=".csv"
+      onChange={handleFileUpload}
+      className="w-full text-center"
+    />
+    <p className="mt-2 text-gray-600">Upload a CSV file containing URLs or keywords.</p>
+  </div>
+)}
 
       <select className="w-full p-2 border mb-2" value={language} onChange={(e) => setLanguage(e.target.value)}>
         <option>English UK</option>
