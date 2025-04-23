@@ -1,6 +1,5 @@
 // /components/SEO.js
 import axios from "axios";
-import Papa from "papaparse";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -11,6 +10,7 @@ export default function SEO() {
   const [brand, setBrand] = useState("");
   const [pKeyword, setPkeyword] = useState("");
   const [sKeyword, setsKeyword] = useState("");
+  const [csvContent, setCsvContent] = useState("");
   const [language, setLanguage] = useState("English UK");
   const [emoji, setEmoji] = useState("");
   const [lines, setLines] = useState(5);
@@ -22,44 +22,67 @@ export default function SEO() {
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
-    if (!file || file.type !== "text/csv") {
-      alert("Please upload a valid CSV file.");
-      return;
-    }
+    if (file && file.type === "text/csv") {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const lines = e.target.result
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean);
+        const [headerLine, ...rows] = lines;
 
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: function (results) {
-        const parsedRows = results.data.map((row) => ({
-          url: row["URL"]?.trim() || "",
-          pKeyword: row["Primary Keyword"]?.trim() || "",
-          sKeyword: row["Secondary Keyword"]?.trim() || "",
-          brand: row["Brand"]?.trim() || "",
-        }));
+        const headers = headerLine.split(",").map((h) => h.trim().toLowerCase());
+
+        const expectedHeaders = ["url", "primary keyword", "secondary keyword", "brand"];
+        const headerIndices = expectedHeaders.map((h) => headers.indexOf(h));
+
+        if (headerIndices.includes(-1)) {
+          alert("CSV is missing one or more required columns: URL, Primary Keyword, Secondary Keyword, Brand.");
+          return;
+        }
+
+        const parsedRows = rows.map((row) => {
+          const values = row.split(",").map((val) => val.trim());
+          const rowData = {};
+
+          expectedHeaders.forEach((header, i) => {
+            rowData[header] = values[headerIndices[i]] || "";
+          });
+
+          return {
+            url: rowData["url"],
+            pKeyword: rowData["primary keyword"],
+            sKeyword: rowData["secondary keyword"], // Keep commas intact
+            brand: rowData["brand"],
+          };
+        });
 
         setCsvRows(parsedRows);
-      },
-      error: function () {
-        alert("Failed to parse CSV. Please check the format.");
-      }
-    });
+      };
+      reader.readAsText(file);
+    } else {
+      alert("Please upload a valid CSV file.");
+    }
   };
 
   const generatePrompt = ({ url, pKeyword, sKeyword, brand }) => {
-    return (
-      `You are an expert in writing metadata and you will be given the following input:\n\n` +
-      `- URL: ${url}\n` +
-      `- Primary Keyword: ${pKeyword}\n` +
-      `- Secondary Keyword(s): ${sKeyword}\n` +
-      `- Brand: ${brand}\n\n` +
-      `Using the ${url} as the website URL for Tone of Voice.\n\n` +
-      `Please provide me with ${lines} page titles in ${language} that don't exceed a maximum length of 60 characters and ${lines} meta descriptions with a maximum length of 165 characters.\n\n` +
-      `Write the titles and meta descriptions for the ${brand} by using the ${pKeyword} as the primary Keyword but also ${sKeyword} as your secondary Keyword(s), in a way that will entice the user to click through including the brand in the meta description but not in the title. Please include the number of characters, including spaces, in brackets after each response.\n\n` +
-      `Also, you should ${emoji} emoji's in the beginning of the sentence.\n\n` +
-      `Within your response always start with:\n` +
-      `I am just a "robot" so do consider the keywords that you want to target and do not copy paste my suggestions.`
-    );
+    return `You are an expert in writing metadata and you will be given the following input:
+
+    - URL: ${url}
+    - Primary Keyword: ${pKeyword}
+    - Secondary Keyword(s): ${sKeyword}
+    - Brand: ${brand}
+
+    Using the ${url} as the website URL for Tone of Voice.
+
+    Please provide me with ${lines} page titles in ${language} that don't exceed a maximum length of 60 characters and ${lines} meta descriptions with a maximum length of 165 characters.
+
+    Write the titles and meta descriptions for the ${brand} by using the ${pKeyword} as the primary Keyword but also ${sKeyword} as your secondary Keyword(s), in a way that will entice the user to click through including the brand in the meta description but not in the title. Please include the number of characters, including spaces, in brackets after each response.
+
+    Also, you should ${emoji} emoji's in the beginning of the sentence.
+
+    Within your response always start with:
+    I am just a "robot" so do consider the keywords that you want to target and do not copy paste my suggestions.`;
   };
 
   const handleSubmit = async () => {
@@ -68,9 +91,7 @@ export default function SEO() {
     setProgress({ current: 0, total: 0 });
 
     try {
-      const inputs = inputType === "csv"
-        ? csvRows
-        : [{ url, pKeyword, sKeyword, brand }];
+      const inputs = inputType === "csv" ? csvRows : [{ url, pKeyword, sKeyword, brand }];
 
       setProgress({ current: 0, total: inputs.length });
 
@@ -80,11 +101,7 @@ export default function SEO() {
         const input = inputs[i];
         const prompt = generatePrompt(input);
 
-        const response = await axios.post(
-          "https://llm-backend-82gd.onrender.com/api/generate-copy",
-          { input_text: prompt },
-          { headers: { "Content-Type": "application/json" } }
-        );
+        const response = await axios.post("https://llm-backend-82gd.onrender.com/api/generate-copy", { input_text: prompt }, { headers: { "Content-Type": "application/json" } });
 
         if (response.data.response) {
           allResults.push(`For input: ${input.url}\n${response.data.response}\n`);
@@ -129,40 +146,15 @@ export default function SEO() {
 
       {inputType === "manual" ? (
         <>
-          <input
-            className="w-full p-2 border mb-2"
-            placeholder="Insert Client URL"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-          />
-          <input
-            className="w-full p-2 border mb-2"
-            placeholder="Insert Primary keyword"
-            value={pKeyword}
-            onChange={(e) => setPkeyword(e.target.value)}
-          />
-          <input
-            className="w-full p-2 border mb-2"
-            placeholder="Insert Secondary keywords (comma separated)"
-            value={sKeyword}
-            onChange={(e) => setsKeyword(e.target.value)}
-          />
-          <input
-            className="w-full p-2 border mb-2"
-            placeholder="Insert Client Brand name here"
-            value={brand}
-            onChange={(e) => setBrand(e.target.value)}
-          />
+          <input className="w-full p-2 border mb-2" placeholder="Insert Client URL" value={url} onChange={(e) => setUrl(e.target.value)} />
+          <input className="w-full p-2 border mb-2" placeholder="Insert Primary keyword" value={pKeyword} onChange={(e) => setpKeyword(e.target.value)} />
+          <input className="w-full p-2 border mb-2" placeholder="Insert Secondary keywords.(If more then one,use comma to separate them)" value={sKeyword} onChange={(e) => setsKeyword(e.target.value)} />
+          <input className="w-full p-2 border mb-2" placeholder="Insert Client Brand name here" value={brand} onChange={(e) => setBrand(e.target.value)} />
         </>
       ) : (
         <div className="border-dashed border-2 border-gray-400 p-6 mb-2 text-center">
-          <input
-            type="file"
-            accept=".csv"
-            onChange={handleFileUpload}
-            className="w-full text-center"
-          />
-          <p className="mt-2 text-gray-600">Upload a CSV file with headers: URL, Primary Keyword, Secondary Keyword, Brand.</p>
+          <input type="file" accept=".csv" onChange={handleFileUpload} className="w-full text-center" />
+          <p className="mt-2 text-gray-600">Upload a CSV file containing URLs or keywords.</p>
         </div>
       )}
 
@@ -174,13 +166,10 @@ export default function SEO() {
         <option>German</option>
       </select>
 
-      <select
-        className="w-full p-2 border mb-2"
-        value={emoji}
-        onChange={(e) => setEmoji(e.target.value)}
-        required
-      >
-        <option value="" disabled hidden>Add Emojis?</option>
+      <select className="w-full p-2 border mb-2" value={emoji} onChange={(e) => setEmoji(e.target.value)} required>
+        <option value="" disabled hidden>
+          Add Emojis?
+        </option>
         <option value="add">Yes</option>
         <option value="not add">No</option>
       </select>
@@ -194,7 +183,9 @@ export default function SEO() {
       <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={handleSubmit} disabled={loading}>
         Generate
       </button>
-      <button className="ml-2 bg-gray-500 text-white px-4 py-2 rounded" onClick={() => navigate("/")}>← Back</button>
+      <button className="ml-2 bg-gray-500 text-white px-4 py-2 rounded" onClick={() => navigate("/")}>
+        ← Back
+      </button>
 
       {loading && (
         <div className="inline-flex items-center gap-2 text-blue-600 font-medium mt-2">
