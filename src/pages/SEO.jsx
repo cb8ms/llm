@@ -21,7 +21,7 @@ export default function SEO() {
 
   const [csvRows, setCsvRows] = useState([]);
 
-// utils/parseCsvLine.js
+  // utils/parseCsvLine.js
 function parseCsvLine(line) {
   const result = [];
   let current = '';
@@ -65,8 +65,7 @@ const handleFileUpload = (event) => {
       const headerIndices = expectedHeaders.map((h) => headers.indexOf(h));
 
       if (headerIndices.includes(-1)) {
-        const missing = expectedHeaders.filter((h, i) => headerIndices[i] === -1);
-        alert(`CSV is missing column(s): ${missing.join(", ")}`);
+        alert("CSV is missing one or more required columns: URL, Primary Keyword, Secondary Keyword, Brand.");
         return;
       }
 
@@ -138,65 +137,52 @@ const handleFileUpload = (event) => {
 
 };
 
- const handleSubmit = async () => {
-  setResult([]);
-  setLoading(true);
-  setProgress({ current: 0, total: 0 });
+  const handleSubmit = async () => {
+    setResult("");
+    setLoading(true);
+    setProgress({ current: 0, total: 0 });
 
-  try {
-    const inputs = inputType === "csv" ? csvRows : [{ url, pKeyword, sKeyword, brand }];
-    setProgress({ current: 0, total: inputs.length });
+    try {
+      const inputs = inputType === "csv" ? csvRows : [{ url, pKeyword, sKeyword, brand }];
 
-    const allStructuredResults = [];
+      setProgress({ current: 0, total: inputs.length });
 
-    for (let i = 0; i < inputs.length; i++) {
-      const input = inputs[i];
-      const prompt = generatePrompt(input);
+      const allResults = [];
 
-      const response = await axios.post(
-        "https://llm-backend-82gd.onrender.com/api/generate-copy",
-        { input_text: prompt },
-        { headers: { "Content-Type": "application/json" } }
-      );
+      for (let i = 0; i < inputs.length; i++) {
+        const input = inputs[i];
+        const prompt = generatePrompt(input);
 
-      if (response.data.response) {
-        const resText = response.data.response;
-        const titles = Array.from(resText.matchAll(/^\d+\.\s(.+?)\s\(\d+ characters?\)/gm)).map(m => m[1]);
-        const metas = Array.from(resText.matchAll(/^\d+\.\s(.+?)\s\(\d+\)$/gm)).slice(titles.length).map(m => m[1]);
-        allStructuredResults.push([input.url, ...titles.flatMap((t, i) => [t, metas[i] || ""])]);
-      } else {
-        allStructuredResults.push([input.url, "No output received"]);
+        const response = await axios.post("https://llm-backend-82gd.onrender.com/api/generate-copy", { input_text: prompt }, { headers: { "Content-Type": "application/json" } });
+
+        if (response.data.response) {
+          allResults.push(`For input: ${input.url}\n${response.data.response}\n`);
+        } else {
+          allResults.push(`For input: ${input.url}\nNo output received.\n`);
+        }
+
+        setProgress((prev) => ({ ...prev, current: i + 1 }));
       }
 
-      setProgress((prev) => ({ ...prev, current: i + 1 }));
+      setResult(allResults.join("\n=========================\n\n"));
+    } catch (err) {
+      setResult("Error generating content.");
+    } finally {
+      setLoading(false);
     }
-
-    setResult(allStructuredResults);
-  } catch (err) {
-    setResult([["Error generating content."]]);
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
 const handleDownloadCSV = () => {
-  const headers = ["URL"];
-  for (let i = 1; i <= 5; i++) {
-    headers.push(`Title ${i}`, `Meta ${i}`);
-  }
-
-  const csvRows = [headers];
-  result.forEach(row => {
-    const safeRow = row.map(val => `"${String(val).replace(/"/g, '""')}"`);
-    csvRows.push(safeRow);
+  const blocks = result.split("\n=========================\n\n").filter(Boolean);
+  const csvRows = blocks.map((block) => {
+    const safe = block.replace(/"/g, '""'); // escape quotes
+    return `"${safe}"`; // wrap full block in quotes
   });
-
-  const csvContent = "data:text/csv;charset=utf-8," + csvRows.map(row => row.join(",")).join("\n");
+  const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement("a");
   link.setAttribute("href", encodedUri);
-  link.setAttribute("download", "structured-marketing-copy.csv");
+  link.setAttribute("download", "marketing-copy.csv");
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
