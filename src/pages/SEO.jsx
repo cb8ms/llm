@@ -8,6 +8,7 @@ export default function SEO() {
   const [inputType, setInputType] = useState("manual");
   const [url, setUrl] = useState("");
   const [brand, setBrand] = useState("");
+  const [screenSize, setscreenSize] = useState("");
   const [pKeyword, setPkeyword] = useState("");
   const [sKeyword, setsKeyword] = useState("");
   const [csvContent, setCsvContent] = useState("");
@@ -94,24 +95,43 @@ const handleFileUpload = (event) => {
 
 
   const generatePrompt = ({ url, pKeyword, sKeyword, brand }) => {
-    return `You are an expert in writing metadata and you will be given the following input:
+
+  if (screenSize === "desktop") {
+    return `You are an SEO expert in writing metadata and you will need to go through the following steps to ensure the exact demands of the input values and provide ${lines} versions of each of the requested outputs:
 
     - URL: ${url}
     - Primary Keyword: ${pKeyword}
     - Secondary Keyword(s): ${sKeyword}
     - Brand: ${brand}
-
+    
     Using the ${url} as the website URL for Tone of Voice.
-
-    Please provide me with ${lines} page titles in ${language} that don't exceed a maximum length of 60 characters and ${lines} meta descriptions with a maximum length of 165 characters.
-
+    
+    Please provide me with Desktop friendly ${lines} page titles in ${language} that don't exceed a maximum length of 55-65 characters or approximately 580px wide also for Meta descriptions don't exceed a maximum length of 150-160 characters or approximately 920px wide.
+    
     Write the titles and meta descriptions for the ${brand} by using the ${pKeyword} as the primary Keyword but also ${sKeyword} as your secondary Keyword(s), in a way that will entice the user to click through including the brand in the meta description but not in the title. Please include the number of characters, including spaces, in brackets after each response.
-
+    
     Also, you should ${emoji} emoji's in the beginning of the sentence.
+    `;
+    
+  } else {
 
-    Within your response always start with:
-    I am just a "robot" so do consider the keywords that you want to target and do not copy paste my suggestions.`;
-  };
+    return `You are an SEO expert in writing metadata and you will need to go through the following steps to ensure the exact demands of the input values and provide ${lines} versions of each of the requested outputs:
+
+    - URL: ${url}
+    - Primary Keyword: ${pKeyword}
+    - Secondary Keyword(s): ${sKeyword}
+    - Brand: ${brand}
+    
+    Using the ${url} as the website URL for Tone of Voice.
+     
+    Please provide me with mobile friendly ${lines} page titles in ${language} that don't exceed a maximum length of 60-75 characters or approximately 580px wide also for Meta descriptions don't exceed a maximum length of 120-130 characters or approximately 680px wide.
+    
+    Write the titles and meta descriptions for the ${brand} by using the ${pKeyword} as the primary Keyword but also ${sKeyword} as your secondary Keyword(s), in a way that will entice the user to click through including the brand in the meta description but not in the title. Please include the number of characters, including spaces, in brackets after each response.
+    
+    Also, you should ${emoji} emoji's in the beginning of the sentence.`;
+  }
+
+};
 
   const handleSubmit = async () => {
     setResult("");
@@ -201,7 +221,12 @@ const handleFileUpload = (event) => {
         <option value="add">Yes</option>
         <option value="not add">No</option>
       </select>
-
+      
+      <select className="w-full p-2 border mb-2" value={screenSize} onChange={(e) => setscreenSize(e.target.value)} required>
+        <option value="desktop">Desktop</option>
+        <option value="mobile">Mobile</option>
+      </select>
+      
       <select className="w-full p-2 border mb-2" value={lines} onChange={(e) => setLines(Number(e.target.value))}>
         <option value={5}>5</option>
         <option value={10}>10</option>
