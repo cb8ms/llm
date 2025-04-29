@@ -20,50 +20,78 @@ export default function SEO() {
 
   const [csvRows, setCsvRows] = useState([]);
 
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (file && file.type === "text/csv") {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const lines = e.target.result
-          .split("\n")
-          .map((line) => line.trim())
-          .filter(Boolean);
-        const [headerLine, ...rows] = lines;
+  // utils/parseCsvLine.js
+function parseCsvLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const nextChar = line[i + 1];
 
-        const headers = headerLine.split(",").map((h) => h.trim().toLowerCase());
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        current += '"';
+        i++; // skip the escaped quote
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  result.push(current.trim());
+  return result;
+}
 
-        const expectedHeaders = ["url", "primary keyword", "secondary keyword", "brand"];
-        const headerIndices = expectedHeaders.map((h) => headers.indexOf(h));
+// main component file
+const handleFileUpload = (event) => {
+  const file = event.target.files[0];
+  if (file && file.type === "text/csv") {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const lines = e.target.result
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+      const [headerLine, ...rows] = lines;
 
-        if (headerIndices.includes(-1)) {
-          alert("CSV is missing one or more required columns: URL, Primary Keyword, Secondary Keyword, Brand.");
-          return;
-        }
+      const headers = parseCsvLine(headerLine).map((h) => h.trim().toLowerCase());
+      const expectedHeaders = ["url", "primary keyword", "secondary keyword", "brand"];
+      const headerIndices = expectedHeaders.map((h) => headers.indexOf(h));
 
-        const parsedRows = rows.map((row) => {
-          const values = row.split(",").map((val) => val.trim());
-          const rowData = {};
+      if (headerIndices.includes(-1)) {
+        alert("CSV is missing one or more required columns: URL, Primary Keyword, Secondary Keyword, Brand.");
+        return;
+      }
 
-          expectedHeaders.forEach((header, i) => {
-            rowData[header] = values[headerIndices[i]] || "";
-          });
+      const parsedRows = rows.map((row) => {
+        const values = parseCsvLine(row);
+        const rowData = {};
 
-          return {
-            url: rowData["url"],
-            pKeyword: rowData["primary keyword"],
-            sKeyword: rowData["secondary keyword"], // Keep commas intact
-            brand: rowData["brand"],
-          };
+        expectedHeaders.forEach((header, i) => {
+          rowData[header] = values[headerIndices[i]] || "";
         });
 
-        setCsvRows(parsedRows);
-      };
-      reader.readAsText(file);
-    } else {
-      alert("Please upload a valid CSV file.");
-    }
-  };
+        return {
+          url: rowData["url"],
+          pKeyword: rowData["primary keyword"],
+          sKeyword: rowData["secondary keyword"],
+          brand: rowData["brand"],
+        };
+      });
+
+      setCsvRows(parsedRows);
+    };
+    reader.readAsText(file);
+  } else {
+    alert("Please upload a valid CSV file.");
+  }
+};
+
 
   const generatePrompt = ({ url, pKeyword, sKeyword, brand }) => {
     return `You are an expert in writing metadata and you will be given the following input:
