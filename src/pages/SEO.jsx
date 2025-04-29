@@ -111,6 +111,8 @@ const handleFileUpload = (event) => {
     Write the titles and meta descriptions for the ${brand} by using the ${pKeyword} as the primary Keyword but also ${sKeyword} as your secondary Keyword(s), in a way that will entice the user to click through including the brand in the meta description but not in the title. Please include the number of characters, including spaces, in brackets after each response.
     
     Also, you should ${emoji} emoji's in the beginning of the sentence.
+    
+    When proving the output, say: For input: ${pKeyword} and then provide with the rest of the output.
     `;
     
   } else {
@@ -128,7 +130,9 @@ const handleFileUpload = (event) => {
     
     Write the titles and meta descriptions for the ${brand} by using the ${pKeyword} as the primary Keyword but also ${sKeyword} as your secondary Keyword(s), in a way that will entice the user to click through including the brand in the meta description but not in the title. Please include the number of characters, including spaces, in brackets after each response.
     
-    Also, you should ${emoji} emoji's in the beginning of the sentence.`;
+    Also, you should ${emoji} emoji's in the beginning of the sentence.
+    
+    When proving the output, say: For input: ${pKeyword} and then provide with the rest of the output.`;
   }
 
 };
