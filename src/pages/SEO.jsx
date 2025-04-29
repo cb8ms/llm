@@ -42,7 +42,7 @@ export default function SEO() {
         }
 
         const parsedRows = rows.map((row) => {
-          const values = row.map((val) => val.trim());
+          const values = row.split(",").map((val) => val.trim());
           const rowData = {};
 
           expectedHeaders.forEach((header, i) => {
