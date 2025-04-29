@@ -172,17 +172,22 @@ const handleFileUpload = (event) => {
     }
   };
 
-  const handleDownloadCSV = () => {
-    const lines = result.split("\n").filter((line) => line.trim() !== "");
-    const csvContent = "data:text/csv;charset=utf-8," + lines.map((line) => `"${line.replace(/"/g, '""')}"`).join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "marketing-copy.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+const handleDownloadCSV = () => {
+  const blocks = result.split("\n=========================\n\n").filter(Boolean);
+  const csvRows = blocks.map((block) => {
+    const safe = block.replace(/"/g, '""'); // escape quotes
+    return `"${safe}"`; // wrap full block in quotes
+  });
+  const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", "marketing-copy.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 
   return (
     <div className="p-8 max-w-xl mx-auto">
