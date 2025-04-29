@@ -8,7 +8,7 @@ export default function SEO() {
   const [inputType, setInputType] = useState("manual");
   const [url, setUrl] = useState("");
   const [brand, setBrand] = useState("");
-  const [screenSize, setscreenSize] = useState("");
+  const [screenSize, setscreenSize] = useState("Desktop");
   const [pKeyword, setPkeyword] = useState("");
   const [sKeyword, setsKeyword] = useState("");
   const [csvContent, setCsvContent] = useState("");
