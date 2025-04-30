@@ -111,6 +111,10 @@ const handleFileUpload = (event) => {
     Write the titles and meta descriptions for the ${brand} by using the ${pKeyword} as the primary Keyword but also ${sKeyword} as your secondary Keyword(s), in a way that will entice the user to click through including the brand in the meta description but not in the title. Please include the number of characters, including spaces, in brackets after each response.
     
     Also, you should ${emoji} emoji's in the beginning of the sentence.
+
+Ensure that the most important information is included first in both titles and descriptions so that if search engines truncate these, the right context is still provided to users.
+
+Page titles should also use a hyphen (-) separator rather than a pipe (|) separator.
     
     When proving the output, say: For input: ${pKeyword} and then provide with the rest of the output.
     `;
@@ -131,6 +135,10 @@ const handleFileUpload = (event) => {
     Write the titles and meta descriptions for the ${brand} by using the ${pKeyword} as the primary Keyword but also ${sKeyword} as your secondary Keyword(s), in a way that will entice the user to click through including the brand in the meta description but not in the title. Please include the number of characters, including spaces, in brackets after each response.
     
     Also, you should ${emoji} emoji's in the beginning of the sentence.
+
+    Ensure that the most important information is included first in both titles and descriptions so that if search engines truncate these, the right context is still provided to users.
+
+Page titles should also use a hyphen (-) separator rather than a pipe (|) separator.
     
     When proving the output, say: For input: ${pKeyword} and then provide with the rest of the output.`;
   }
