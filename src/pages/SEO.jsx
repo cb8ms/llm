@@ -13,165 +13,116 @@ export default function SEO() {
   const [sKeyword, setsKeyword] = useState("");
   const [csvContent, setCsvContent] = useState("");
   const [language, setLanguage] = useState("English UK");
-  const [emoji, setEmoji] = useState("");
   const [lines, setLines] = useState(5);
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
-
   const [csvRows, setCsvRows] = useState([]);
 
-  // utils/parseCsvLine.js
-function parseCsvLine(line) {
-  const result = [];
-  let current = '';
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    const nextChar = line[i + 1];
-
-    if (char === '"') {
-      if (inQuotes && nextChar === '"') {
-        current += '"';
-        i++; // skip the escaped quote
+  function parseCsvLine(line) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      const nextChar = line[i + 1];
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        result.push(current.trim());
+        current = '';
       } else {
-        inQuotes = !inQuotes;
+        current += char;
       }
-    } else if (char === ',' && !inQuotes) {
-      result.push(current.trim());
-      current = '';
-    } else {
-      current += char;
     }
+    result.push(current.trim());
+    return result;
   }
-  result.push(current.trim());
-  return result;
-}
 
-// main component file
-const handleFileUpload = (event) => {
-  const file = event.target.files[0];
-  if (file && file.type === "text/csv") {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const lines = e.target.result
-        .split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter(Boolean);
-      const [headerLine, ...rows] = lines;
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (file && file.type === "text/csv") {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const lines = e.target.result.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+        const [headerLine, ...rows] = lines;
+        const headers = parseCsvLine(headerLine).map((h) => h.trim().toLowerCase());
+        const expectedHeaders = ["url", "primary keyword", "secondary keyword", "brand"];
+        const headerIndices = expectedHeaders.map((h) => headers.indexOf(h));
 
-      const headers = parseCsvLine(headerLine).map((h) => h.trim().toLowerCase());
-      const expectedHeaders = ["url", "primary keyword", "secondary keyword", "brand"];
-      const headerIndices = expectedHeaders.map((h) => headers.indexOf(h));
+        if (headerIndices.includes(-1)) {
+          alert("CSV is missing one or more required columns: URL, Primary Keyword, Secondary Keyword, Brand.");
+          return;
+        }
 
-      if (headerIndices.includes(-1)) {
-        alert("CSV is missing one or more required columns: URL, Primary Keyword, Secondary Keyword, Brand.");
-        return;
-      }
-
-      const parsedRows = rows.map((row) => {
-        const values = parseCsvLine(row);
-        const rowData = {};
-
-        expectedHeaders.forEach((header, i) => {
-          rowData[header] = values[headerIndices[i]] || "";
+        const parsedRows = rows.map((row) => {
+          const values = parseCsvLine(row);
+          const rowData = {};
+          expectedHeaders.forEach((header, i) => {
+            rowData[header] = values[headerIndices[i]] || "";
+          });
+          return {
+            url: rowData["url"],
+            pKeyword: rowData["primary keyword"],
+            sKeyword: rowData["secondary keyword"],
+            brand: rowData["brand"],
+          };
         });
 
-        return {
-          url: rowData["url"],
-          pKeyword: rowData["primary keyword"],
-          sKeyword: rowData["secondary keyword"],
-          brand: rowData["brand"],
-        };
-      });
-
-      setCsvRows(parsedRows);
-    };
-    reader.readAsText(file);
-  } else {
-    alert("Please upload a valid CSV file.");
-  }
-};
-
+        setCsvRows(parsedRows);
+      };
+      reader.readAsText(file);
+    } else {
+      alert("Please upload a valid CSV file.");
+    }
+  };
 
   const generatePrompt = ({ url, pKeyword, sKeyword, brand }) => {
+    const basePrompt = `You are an SEO expert in writing metadata and you will need to go through the following steps to ensure the exact demands of the input values and provide ${lines} versions of each of the requested outputs:
 
-  if (screenSize === "desktop") {
-    return `You are an SEO expert in writing metadata and you will need to go through the following steps to ensure the exact demands of the input values and provide ${lines} versions of each of the requested outputs:
+- URL: ${url}
+- Primary Keyword: ${pKeyword}
+- Secondary Keyword(s): ${sKeyword}
+- Brand: ${brand}
 
-    - URL: ${url}
-    - Primary Keyword: ${pKeyword}
-    - Secondary Keyword(s): ${sKeyword}
-    - Brand: ${brand}
-    
-    Using the ${url} as the website URL for Tone of Voice.
-    
-    Please provide me with Desktop friendly ${lines} page titles in ${language} that don't exceed a maximum length of 55-65 characters or approximately 580px wide also for Meta descriptions don't exceed a maximum length of 150-160 characters or approximately 920px wide.
-    
-    Write the titles and meta descriptions for the ${brand} by using the ${pKeyword} as the primary Keyword but also ${sKeyword} as your secondary Keyword(s), in a way that will entice the user to click through including the brand in the meta description but not in the title. Please include the number of characters, including spaces, in brackets after each response.
-    
-    Also, you should ${emoji} emoji's in the beginning of the sentence.
+Using the ${url} as the website URL for Tone of Voice.
+
+Please provide me with ${screenSize.toLowerCase()} friendly ${lines} page titles in ${language} that don't exceed a maximum length of ${screenSize === "desktop" ? "55-65 characters or approximately 580px" : "60-75 characters or approximately 580px"} wide also for Meta descriptions don't exceed a maximum length of ${screenSize === "desktop" ? "150-160 characters or approximately 920px" : "120-130 characters or approximately 680px"} wide.
+
+Write the titles and meta descriptions for the ${brand} by using the ${pKeyword} as the primary Keyword but also ${sKeyword} as your secondary Keyword(s), in a way that will entice the user to click through including the brand in the meta description but not in the title. Please include the number of characters, including spaces, in brackets after each response.
 
 Ensure that the most important information is included first in both titles and descriptions so that if search engines truncate these, the right context is still provided to users.
 
 Page titles should also use a hyphen (-) separator rather than a pipe (|) separator.
-    
-    When proving the output, say: For input: ${pKeyword} and then provide with the rest of the output.
-    `;
-    
-  } else {
 
-    return `You are an SEO expert in writing metadata and you will need to go through the following steps to ensure the exact demands of the input values and provide ${lines} versions of each of the requested outputs:
-
-    - URL: ${url}
-    - Primary Keyword: ${pKeyword}
-    - Secondary Keyword(s): ${sKeyword}
-    - Brand: ${brand}
-    
-    Using the ${url} as the website URL for Tone of Voice.
-     
-    Please provide me with mobile friendly ${lines} page titles in ${language} that don't exceed a maximum length of 60-75 characters or approximately 580px wide also for Meta descriptions don't exceed a maximum length of 120-130 characters or approximately 680px wide.
-    
-    Write the titles and meta descriptions for the ${brand} by using the ${pKeyword} as the primary Keyword but also ${sKeyword} as your secondary Keyword(s), in a way that will entice the user to click through including the brand in the meta description but not in the title. Please include the number of characters, including spaces, in brackets after each response.
-    
-    Also, you should ${emoji} emoji's in the beginning of the sentence.
-
-    Ensure that the most important information is included first in both titles and descriptions so that if search engines truncate these, the right context is still provided to users.
-
-Page titles should also use a hyphen (-) separator rather than a pipe (|) separator.
-    
-    When proving the output, say: For input: ${pKeyword} and then provide with the rest of the output.`;
-  }
-
-};
+When proving the output, say: For input: ${pKeyword} and then provide with the rest of the output.`;
+    return basePrompt;
+  };
 
   const handleSubmit = async () => {
     setResult("");
     setLoading(true);
     setProgress({ current: 0, total: 0 });
-
     try {
       const inputs = inputType === "csv" ? csvRows : [{ url, pKeyword, sKeyword, brand }];
-
       setProgress({ current: 0, total: inputs.length });
-
       const allResults = [];
-
       for (let i = 0; i < inputs.length; i++) {
         const input = inputs[i];
         const prompt = generatePrompt(input);
-
         const response = await axios.post("https://llm-backend-82gd.onrender.com/api/generate-copy", { input_text: prompt }, { headers: { "Content-Type": "application/json" } });
-
         if (response.data.response) {
           allResults.push(`For input: ${input.url}\n${response.data.response}\n`);
         } else {
           allResults.push(`For input: ${input.url}\nNo output received.\n`);
         }
-
         setProgress((prev) => ({ ...prev, current: i + 1 }));
       }
-
       setResult(allResults.join("\n=========================\n\n"));
     } catch (err) {
       setResult("Error generating content.");
@@ -180,27 +131,25 @@ Page titles should also use a hyphen (-) separator rather than a pipe (|) separa
     }
   };
 
-const handleDownloadCSV = () => {
-  const blocks = result.split("\n=========================\n\n").filter(Boolean);
-  const csvRows = blocks.map((block) => {
-    const safe = block.replace(/"/g, '""'); // escape quotes
-    return `"${safe}"`; // wrap full block in quotes
-  });
-  const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", "marketing-copy.csv");
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
-
+  const handleDownloadCSV = () => {
+    const blocks = result.split("\n=========================\n\n").filter(Boolean);
+    const csvRows = blocks.map((block) => {
+      const safe = block.replace(/"/g, '""');
+      return `"${safe}"`;
+    });
+    const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "marketing-copy.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="p-8 max-w-xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">SEO Marketing Copy Generator</h1>
-
       <div className="mb-4">
         <label className="font-semibold mr-4">Choose Input Type:</label>
         <select className="p-2 border" value={inputType} onChange={(e) => setInputType(e.target.value)}>
@@ -208,11 +157,10 @@ const handleDownloadCSV = () => {
           <option value="csv">Upload CSV</option>
         </select>
       </div>
-
       {inputType === "manual" ? (
         <>
           <input className="w-full p-2 border mb-2" placeholder="Insert Client URL" value={url} onChange={(e) => setUrl(e.target.value)} />
-          <input className="w-full p-2 border mb-2" placeholder="Insert Primary keyword" value={pKeyword} onChange={(e) => setpKeyword(e.target.value)} />
+          <input className="w-full p-2 border mb-2" placeholder="Insert Primary keyword" value={pKeyword} onChange={(e) => setPkeyword(e.target.value)} />
           <input className="w-full p-2 border mb-2" placeholder="Insert Secondary keywords.(If more then one,use comma to separate them)" value={sKeyword} onChange={(e) => setsKeyword(e.target.value)} />
           <input className="w-full p-2 border mb-2" placeholder="Insert Client Brand name here" value={brand} onChange={(e) => setBrand(e.target.value)} />
         </>
@@ -231,31 +179,19 @@ const handleDownloadCSV = () => {
         <option>German</option>
       </select>
 
-      <select className="w-full p-2 border mb-2" value={emoji} onChange={(e) => setEmoji(e.target.value)} required>
-        <option value="" disabled hidden>
-          Add Emojis?
-        </option>
-        <option value="add">Yes</option>
-        <option value="not add">No</option>
-      </select>
-      
       <select className="w-full p-2 border mb-2" value={screenSize} onChange={(e) => setscreenSize(e.target.value)} required>
         <option value="desktop">Desktop</option>
         <option value="mobile">Mobile</option>
       </select>
-      
+
       <select className="w-full p-2 border mb-2" value={lines} onChange={(e) => setLines(Number(e.target.value))}>
         <option value={5}>5</option>
         <option value={10}>10</option>
         <option value={15}>15</option>
       </select>
 
-      <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={handleSubmit} disabled={loading}>
-        Generate
-      </button>
-      <button className="ml-2 bg-gray-500 text-white px-4 py-2 rounded" onClick={() => navigate("/")}>
-        ← Back
-      </button>
+      <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={handleSubmit} disabled={loading}>Generate</button>
+      <button className="ml-2 bg-gray-500 text-white px-4 py-2 rounded" onClick={() => navigate("/")}>← Back</button>
 
       {loading && (
         <div className="inline-flex items-center gap-2 text-blue-600 font-medium mt-2">
@@ -270,9 +206,7 @@ const handleDownloadCSV = () => {
       {result && (
         <div className="mt-4">
           <pre className="bg-gray-100 p-4 whitespace-pre-wrap">{result}</pre>
-          <button className="mt-2 bg-green-600 text-white px-4 py-2 rounded" onClick={handleDownloadCSV}>
-            Download CSV
-          </button>
+          <button className="mt-2 bg-green-600 text-white px-4 py-2 rounded" onClick={handleDownloadCSV}>Download CSV</button>
         </div>
       )}
     </div>
