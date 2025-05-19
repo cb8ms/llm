@@ -101,7 +101,7 @@ export default function SEO() {
   Page titles should also use a hyphen (-) separator rather than a pipe (|) separator.
   
   **Important:** Do not include any special characters such as *, #, |, /, <, >, or similar in the Page Titles or Meta Descriptions. Only use plain text.
-  Please include the number of characters, including spaces, in brackets after each response.
+  Please include the number of characters, including spaces, in brackets (()) after each response.
   
   When providing the output, say: For input: ${pKeyword} and then provide the rest of the output.
   Also, do not use any * or # when providing the Page Titles or Meta Descriptions headline.`;
