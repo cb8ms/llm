@@ -94,7 +94,8 @@ export default function SEO() {
   
   Please provide me with ${screenSize.toLowerCase()} friendly ${lines} page titles in ${language} that don't exceed a maximum length of ${screenSize === "desktop" ? "55-65 characters or approximately 580px" : "60-75 characters or approximately 580px"} wide also for Meta descriptions don't exceed a maximum length of ${screenSize === "desktop" ? "150-160 characters or approximately 920px" : "120-130 characters or approximately 680px"} wide.
   
-  Write the titles and meta descriptions for the ${brand} by using the ${pKeyword} as the primary Keyword but also ${sKeyword} as your secondary Keyword(s), in a way that will entice the user to click through including the brand in the meta description but not in the title. Please include the number of characters, including spaces, in brackets after each response.
+  Write the titles and meta descriptions for the ${brand} by using the ${pKeyword} as the primary Keyword but also ${sKeyword} as your secondary Keyword(s), in a way that will entice the user to click through including the brand in the meta description but not in the title. 
+  ** Important: ** Please include the number of characters, including spaces, in brackets after each response.
   
   Ensure that the most important information is included first in both titles and descriptions so that if search engines truncate these, the right context is still provided to users.
   
