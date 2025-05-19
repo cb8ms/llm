@@ -136,11 +136,15 @@ export default function SEO() {
   };
 
   const handleDownloadCSV = () => {
-    const blocks = result.split("\n=========================\n\n").filter(Boolean);
+    // Sanitize the result by removing unwanted "###" characters
+    const sanitizedResult = result.replace(/###/g, "");
+  
+    const blocks = sanitizedResult.split("\n=========================\n\n").filter(Boolean);
     const csvRows = blocks.map((block) => {
-      const safe = block.replace(/"/g, '""');
+      const safe = block.replace(/"/g, '""'); // Escape double quotes for CSV
       return `"${safe}"`;
     });
+  
     const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
