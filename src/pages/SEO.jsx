@@ -134,7 +134,6 @@ export default function SEO() {
       setLoading(false);
     }
   };
-
   const handleDownloadCSV = () => {
     // Sanitize the result by removing unwanted "###" characters
     const sanitizedResult = result.replace(/###/g, "");
@@ -145,8 +144,9 @@ export default function SEO() {
       return `"${safe}"`;
     });
   
-    const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
-    const encodedUri = encodeURI(csvContent);
+    // Add BOM to ensure proper encoding
+    const csvContent = "\uFEFF" + csvRows.join("\n");
+    const encodedUri = "data:text/csv;charset=utf-8," + encodeURIComponent(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
     link.setAttribute("download", "marketing-copy.csv");
@@ -155,7 +155,7 @@ export default function SEO() {
     document.body.removeChild(link);
   };
 
-
+  
   return (
     <div className="p-8 max-w-xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">SEO Marketing Copy Generator</h1>
