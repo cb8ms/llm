@@ -84,24 +84,26 @@ export default function SEO() {
 
   const generatePrompt = ({ url, pKeyword, sKeyword, brand }) => {
     const basePrompt = `You are an SEO expert in writing metadata and you will need to go through the following steps to ensure the exact demands of the input values and provide ${lines} versions of each of the requested outputs:
-
-- URL: ${url}
-- Primary Keyword: ${pKeyword}
-- Secondary Keyword(s): ${sKeyword}
-- Brand: ${brand}
-
-Using the ${url} as the website URL for Tone of Voice.
-
-Please provide me with ${screenSize.toLowerCase()} friendly ${lines} page titles in ${language} that don't exceed a maximum length of ${screenSize === "desktop" ? "55-65 characters or approximately 580px" : "60-75 characters or approximately 580px"} wide also for Meta descriptions don't exceed a maximum length of ${screenSize === "desktop" ? "150-160 characters or approximately 920px" : "120-130 characters or approximately 680px"} wide.
-
-Write the titles and meta descriptions for the ${brand} by using the ${pKeyword} as the primary Keyword but also ${sKeyword} as your secondary Keyword(s), in a way that will entice the user to click through including the brand in the meta description but not in the title. Please include the number of characters, including spaces, in brackets after each response.
-
-Ensure that the most important information is included first in both titles and descriptions so that if search engines truncate these, the right context is still provided to users.
-
-Page titles should also use a hyphen (-) separator rather than a pipe (|) separator.
-
-When providing the output, say: For input: ${pKeyword} and then provide the rest of the output.
-Also, do not use any * or # when providing the Page Titles or Meta Descriptions headline.`;
+  
+  - URL: ${url}
+  - Primary Keyword: ${pKeyword}
+  - Secondary Keyword(s): ${sKeyword}
+  - Brand: ${brand}
+  
+  Using the ${url} as the website URL for Tone of Voice.
+  
+  Please provide me with ${screenSize.toLowerCase()} friendly ${lines} page titles in ${language} that don't exceed a maximum length of ${screenSize === "desktop" ? "55-65 characters or approximately 580px" : "60-75 characters or approximately 580px"} wide also for Meta descriptions don't exceed a maximum length of ${screenSize === "desktop" ? "150-160 characters or approximately 920px" : "120-130 characters or approximately 680px"} wide.
+  
+  Write the titles and meta descriptions for the ${brand} by using the ${pKeyword} as the primary Keyword but also ${sKeyword} as your secondary Keyword(s), in a way that will entice the user to click through including the brand in the meta description but not in the title. Please include the number of characters, including spaces, in brackets after each response.
+  
+  Ensure that the most important information is included first in both titles and descriptions so that if search engines truncate these, the right context is still provided to users.
+  
+  Page titles should also use a hyphen (-) separator rather than a pipe (|) separator.
+  
+  **Important:** Do not include any special characters such as *, #, |, /, <, >, or similar in the Page Titles or Meta Descriptions. Only use plain text.
+  
+  When providing the output, say: For input: ${pKeyword} and then provide the rest of the output.
+  Also, do not use any * or # when providing the Page Titles or Meta Descriptions headline.`;
     return basePrompt;
   };
 
