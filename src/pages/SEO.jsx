@@ -100,7 +100,7 @@ Ensure that the most important information is included first in both titles and 
 
 Page titles should also use a hyphen (-) separator rather than a pipe (|) separator.
 
-When proving the output, say: For input: ${pKeyword} and then provide with the rest of the output.`;
+When providing the output, say: For input: ${pKeyword} and then provide the rest of the output.`;
     return basePrompt;
   };
 
@@ -117,7 +117,7 @@ When proving the output, say: For input: ${pKeyword} and then provide with the r
         const prompt = generatePrompt(input);
         const response = await axios.post("https://llm-backend-82gd.onrender.com/api/generate-copy", { input_text: prompt }, { headers: { "Content-Type": "application/json" } });
         if (response.data.response) {
-          allResults.push(`For input: ${input.url}\n${response.data.response}\n`);
+          allResults.push(`For input: ${input.url}\n${response.data.response.replace(/\*\*\*/g, "###").replace(/\*\*/g, "")}\n`);
         } else {
           allResults.push(`For input: ${input.url}\nNo output received.\n`);
         }
@@ -146,6 +146,7 @@ When proving the output, say: For input: ${pKeyword} and then provide with the r
     link.click();
     document.body.removeChild(link);
   };
+
 
   return (
     <div className="p-8 max-w-xl mx-auto">
