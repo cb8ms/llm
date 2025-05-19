@@ -100,7 +100,8 @@ Ensure that the most important information is included first in both titles and 
 
 Page titles should also use a hyphen (-) separator rather than a pipe (|) separator.
 
-When providing the output, say: For input: ${pKeyword} and then provide the rest of the output.`;
+When providing the output, say: For input: ${pKeyword} and then provide the rest of the output.
+Also, do not use any * or # when providing the Page Titles or Meta Descriptions headline.`;
     return basePrompt;
   };
 
