@@ -104,32 +104,37 @@ When providing the output, say: For input: ${pKeyword} and then provide the rest
     return basePrompt;
   };
 
-  const handleSubmit = async () => {
-    setResult("");
-    setLoading(true);
-    setProgress({ current: 0, total: 0 });
-    try {
-      const inputs = inputType === "csv" ? csvRows : [{ url, pKeyword, sKeyword, brand }];
-      setProgress({ current: 0, total: inputs.length });
-      const allResults = [];
-      for (let i = 0; i < inputs.length; i++) {
-        const input = inputs[i];
-        const prompt = generatePrompt(input);
-        const response = await axios.post("https://llm-backend-82gd.onrender.com/api/generate-copy", { input_text: prompt }, { headers: { "Content-Type": "application/json" } });
-        if (response.data.response) {
-          allResults.push(`For input: ${input.url}\n${response.data.response.replace(/\*\*\*/g, "###").replace(/\*\*/g, "")}\n`);
-        } else {
-          allResults.push(`For input: ${input.url}\nNo output received.\n`);
-        }
-        setProgress((prev) => ({ ...prev, current: i + 1 }));
-      }
-      setResult(allResults.join("\n=========================\n\n"));
-    } catch (err) {
-      setResult("Error generating content.");
-    } finally {
-      setLoading(false);
-    }
-  };
+const handleSubmit = async () => {
+  setResult("");
+  setLoading(true);
+  setProgress({ current: 0, total: 0 });
+  try {
+    const inputs = inputType === "csv" ? csvRows : [{ url, pKeyword, sKeyword, brand }];
+    setProgress({ current: 0, total: inputs.length });
+
+    // Prepare the input prompts for batch processing
+    const inputPrompts = inputs.map((input) => generatePrompt(input));
+
+    // Send all inputs in a single request
+    const response = await axios.post(
+      "https://llm-backend-82gd.onrender.com/api/generate-copy",
+      { inputs: inputPrompts }, // Send the list of prompts
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+    const allResults = response.data.results.map((result, index) =>
+      result.response
+        ? `For input: ${inputs[index].url}\n${result.response.replace(/\*\*\*/g, "###").replace(/\*\*/g, "")}\n`
+        : `For input: ${inputs[index].url}\nNo output received.\n`
+    );
+
+    setResult(allResults.join("\n=========================\n\n"));
+  } catch (err) {
+    setResult("Error generating content.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleDownloadCSV = () => {
     // Sanitize the result by removing unwanted "###" characters
