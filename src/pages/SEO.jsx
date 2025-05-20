@@ -21,7 +21,7 @@ export default function SEO() {
 
   function parseCsvLine(line) {
     const result = [];
-    let current = '';
+    let current = "";
     let inQuotes = false;
     for (let i = 0; i < line.length; i++) {
       const char = line[i];
@@ -33,9 +33,9 @@ export default function SEO() {
         } else {
           inQuotes = !inQuotes;
         }
-      } else if (char === ',' && !inQuotes) {
+      } else if (char === "," && !inQuotes) {
         result.push(current.trim());
-        current = '';
+        current = "";
       } else {
         current += char;
       }
@@ -49,7 +49,10 @@ export default function SEO() {
     if (file && file.type === "text/csv") {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const lines = e.target.result.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+        const lines = e.target.result
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter(Boolean);
         const [headerLine, ...rows] = lines;
         const headers = parseCsvLine(headerLine).map((h) => h.trim().toLowerCase());
         const expectedHeaders = ["url", "primary keyword", "secondary keyword", "brand"];
@@ -104,45 +107,40 @@ When providing the output, say: For input: ${pKeyword} and then provide the rest
     return basePrompt;
   };
 
-const handleSubmit = async () => {
-  setResult("");
-  setLoading(true);
-  setProgress({ current: 0, total: 0 });
-  try {
-    const inputs = inputType === "csv" ? csvRows : [{ url, pKeyword, sKeyword, brand }];
-    setProgress({ current: 0, total: inputs.length });
-
-    // Prepare the input prompts for batch processing
-    const inputPrompts = inputs.map((input) => generatePrompt(input));
-
-    // Send all inputs in a single request
-    const response = await axios.post(
-      "https://llm-backend-82gd.onrender.com/api/generate-copy",
-      { inputs: inputPrompts }, // Send the list of prompts
-      { headers: { "Content-Type": "application/json" } }
-    );
-
-    const allResults = response.data.results.map((result, index) =>
-      result.response
-        ? `For input: ${inputs[index].url}\n${result.response.replace(/\*\*\*/g, "###").replace(/\*\*/g, "")}\n`
-        : `For input: ${inputs[index].url}\nNo output received.\n`
-    );
-
-    setResult(allResults.join("\n=========================\n\n"));
-  } catch (err) {
-    setResult("Error generating content.");
-  } finally {
-    setLoading(false);
-  }
-};
+  const handleSubmit = async () => {
+    setResult("");
+    setLoading(true);
+    setProgress({ current: 0, total: 0 });
+    try {
+      const inputs = inputType === "csv" ? csvRows : [{ url, pKeyword, sKeyword, brand }];
+      setProgress({ current: 0, total: inputs.length });
+      const allResults = [];
+      for (let i = 0; i < inputs.length; i++) {
+        const input = inputs[i];
+        const prompt = generatePrompt(input);
+        const response = await axios.post("https://llm-backend-82gd.onrender.com/api/generate-copy", { input_text: prompt }, { headers: { "Content-Type": "application/json" } });
+        if (response.data.response) {
+          allResults.push(`For input: ${input.url}\n${response.data.response.replace(/\*\*\*/g, "###").replace(/\*\*/g, "")}\n`);
+        } else {
+          allResults.push(`For input: ${input.url}\nNo output received.\n`);
+        }
+        setProgress((prev) => ({ ...prev, current: i + 1 }));
+      }
+      setResult(allResults.join("\n=========================\n\n"));
+    } catch (err) {
+      setResult("Error generating content.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDownloadCSV = () => {
     // Sanitize the result by removing unwanted "###" characters
     const sanitizedResult = result.replace(/###/g, "");
-  
+
     const blocks = sanitizedResult.split("\n=========================\n\n").filter(Boolean);
     const csvRows = [];
-  
+
     blocks.forEach((block) => {
       const lines = block.split("\n").filter(Boolean); // Split block into lines
       lines.forEach((line) => {
@@ -150,7 +148,7 @@ const handleSubmit = async () => {
         csvRows.push(`"${safe}"`); // Add each line as a separate row
       });
     });
-  
+
     // Add BOM to ensure proper encoding
     const csvContent = "\uFEFF" + csvRows.join("\n");
     const encodedUri = "data:text/csv;charset=utf-8," + encodeURIComponent(csvContent);
@@ -161,7 +159,6 @@ const handleSubmit = async () => {
     link.click();
     document.body.removeChild(link);
   };
-
 
   return (
     <div className="p-8 max-w-xl mx-auto">
@@ -206,8 +203,12 @@ const handleSubmit = async () => {
         <option value={15}>15</option>
       </select>
 
-      <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={handleSubmit} disabled={loading}>Generate</button>
-      <button className="ml-2 bg-gray-500 text-white px-4 py-2 rounded" onClick={() => navigate("/")}>← Back</button>
+      <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={handleSubmit} disabled={loading}>
+        Generate
+      </button>
+      <button className="ml-2 bg-gray-500 text-white px-4 py-2 rounded" onClick={() => navigate("/")}>
+        ← Back
+      </button>
 
       {loading && (
         <div className="inline-flex items-center gap-2 text-blue-600 font-medium mt-2">
@@ -222,7 +223,9 @@ const handleSubmit = async () => {
       {result && (
         <div className="mt-4">
           <pre className="bg-gray-100 p-4 whitespace-pre-wrap">{result}</pre>
-          <button className="mt-2 bg-green-600 text-white px-4 py-2 rounded" onClick={handleDownloadCSV}>Download CSV</button>
+          <button className="mt-2 bg-green-600 text-white px-4 py-2 rounded" onClick={handleDownloadCSV}>
+            Download CSV
+          </button>
         </div>
       )}
     </div>
