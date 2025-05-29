@@ -142,7 +142,6 @@ Provide a short paragraph on the reason why this ad copy has been selected follo
       setLoading(false);
     }
   };
-
   const handleDownloadCSV = () => {
     const lines = result.split("\n").filter((line) => line.trim() !== "");
     const csvContent = "data:text/csv;charset=utf-8," + lines.map((line) => `"${line.replace(/"/g, '""')}"`).join("\n");
@@ -175,24 +174,24 @@ Provide a short paragraph on the reason why this ad copy has been selected follo
           <p className="mt-2 text-gray-600">Upload a CSV file containing URLs or keywords.</p>
         </div>
       )}
-      <div className="text-sm mt-1">Select a Language</div>
+
       <select className="w-full p-2 border mb-2" value={language} onChange={(e) => setLanguage(e.target.value)}>
         <option>English UK</option>
         <option>English US</option>
         <option>Italian</option>
         <option>French</option>
       </select>
-      <div className="text-sm mt-1">Select the Platform</div>
+
       <select className="w-full p-2 border mb-2" value={platform} onChange={(e) => setPlatform(e.target.value)}>
         <option>Facebook</option>
         <option>Google Ads</option>
       </select>
-      <div className="text-sm mt-1">Type of Marketing Objective</div>
+
       <select className="w-full p-2 border mb-2" value={objective} onChange={(e) => setObjective(e.target.value)}>
         <option>Sales</option>
         <option>Awareness</option>
       </select>
-      <div className="text-sm mt-1">Number of Lines</div>
+
       <select className="w-full p-2 border mb-2" value={lines} onChange={(e) => setLines(Number(e.target.value))}>
         <option value={5}>5</option>
         <option value={10}>10</option>
