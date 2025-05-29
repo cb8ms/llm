@@ -18,6 +18,10 @@ export default function SEO() {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [csvRows, setCsvRows] = useState([]);
+  const [bespokeTitleCharCount, setBespokeTitleCharCount] = useState("");
+  const [bespokeDescCharCount, setBespokeDescCharCount] = useState("");
+  const [recommendBrandInTitle, setRecommendBrandInTitle] = useState(false);
+
 
   function parseCsvLine(line) {
     const result = [];
@@ -86,26 +90,55 @@ export default function SEO() {
   };
 
   const generatePrompt = ({ url, pKeyword, sKeyword, brand }) => {
-    const basePrompt = `You are an SEO expert in writing metadata and you will need to go through the following steps to ensure the exact demands of the input values and provide ${lines} versions of each of the requested outputs:
+   let titleCharLimitLabel, descCharLimitLabel;
+  let titleCharLimitMax, descCharLimitMax;
+  let descCharRecommendedMin = 120;
 
-- URL: ${url}
-- Primary Keyword: ${pKeyword}
-- Secondary Keyword(s): ${sKeyword}
-- Brand: ${brand}
 
-Using the ${url} as the website URL for Tone of Voice.
+  if (screenSize === "desktop") {
+titleCharLimitLabel = "55-65 characters or approximately 580px";
+    descCharLimitLabel = "150-160 characters or approximately 920px";
+    titleCharLimitMax = 65;
+    descCharLimitMax = 160;
+  } else if (screenSize === "mobile") {
+    titleCharLimitLabel = "60-75 characters or approximately 580px";
+    descCharLimitLabel = "120-130 characters or approximately 680px";
+    titleCharLimitMax = 130; // Use desc limit for meta
+    descCharLimitMax = 130;
+  } else if (screenSize === "bespoke") {
+    titleCharLimitMax = bespokeTitleCharCount || 65;
+    descCharLimitMax = bespokeDescCharCount || 130;
+    titleCharLimitLabel = `${titleCharLimitMax} `;
+    descCharLimitLabel = `${descCharLimitMax} `;
+  } else {
+    titleCharLimitLabel = "55-65 characters or approximately 580px";
+    descCharLimitLabel = "150-160 characters or approximately 920px";
+    titleCharLimitMax = 65;
+    descCharLimitMax = 160;
+  }
 
-Please provide me with ${screenSize.toLowerCase()} friendly ${lines} page titles in ${language} that don't exceed a maximum length of ${screenSize === "desktop" ? "55-65 characters or approximately 580px" : "60-75 characters or approximately 580px"} wide also for Meta descriptions don't exceed a maximum length of ${screenSize === "desktop" ? "150-160 characters or approximately 920px" : "120-130 characters or approximately 680px"} wide.
+  const basePrompt = `You are an SEO expert in writing metadata and must strictly follow the steps below to meet all input requirements. You will provide ${lines} distinct versions of each metadata output.
 
-Write the titles and meta descriptions for the ${brand} by using the ${pKeyword} as the primary Keyword but also ${sKeyword} as your secondary Keyword(s), in a way that will entice the user to click through including the brand in the meta description but not in the title. Please include the number of characters, including spaces, in brackets after each response.
+Inputs: URL: ${url}; Primary Keyword: ${pKeyword}; Secondary Keyword(s): ${sKeyword}; Brand: ${brand}. Use the tone of voice from the website at ${url}. Write for a ${screenSize.toLowerCase()} display audience in ${language}.
 
-Ensure that the most important information is included first in both titles and descriptions so that if search engines truncate these, the right context is still provided to users.
+Your task is to write:
+- ${lines} page titles, each no more than ${titleCharLimitMax} characters (including spaces), and ideally within 5 characters of that limit.
+${recommendBrandInTitle ? "- Please do add the Brand name at the end of the Page Titles.\n" : ""}
+- ${lines} meta descriptions, each no more than ${descCharLimitMax} characters (including spaces), and each should use at least ${descCharRecommendedMin} characters. If possible, aim for ${descCharLimitMax} characters for maximum search snippet impact.
 
-Page titles should also use a hyphen (-) separator rather than a pipe (|) separator.
+Rules:
+1. Maximize character usage: Each output should be as close as possible to the allowed character limit without exceeding it. Do not be conservative with length.
+2. Page titles: Do not include the brand name; use a hyphen (-) as a separator, not a pipe (|); place the primary keyword (${pKeyword}) early, and include secondary keyword(s) (${sKeyword}) naturally.
+3. Meta descriptions: Must include the brand name (${brand}); encourage user engagement and click-through; begin with the most important information to preserve meaning if truncated.
+4. Capitalization: All location names must be capitalized (e.g., "london" → "London"); ensure proper nouns like cities, countries, and regions use correct capitalization.
 
-When providing the output, say: For input: ${pKeyword} and then provide the rest of the output.`;
-    return basePrompt;
-  };
+After each title and description, include the character count in brackets, e.g., [121 characters].
+
+Begin your output with: For input: ${pKeyword}, and then provide all title and description variations.
+
+`;
+  return basePrompt;
+};
 
   const handleSubmit = async () => {
     setResult("");
@@ -183,7 +216,9 @@ When providing the output, say: For input: ${pKeyword} and then provide the rest
           <p className="mt-2 text-gray-600">Upload a CSV file containing URLs or keywords.</p>
         </div>
       )}
-
+ <div className="text-sm mt-1">
+          Select the Language
+        </div>
       <select className="w-full p-2 border mb-2" value={language} onChange={(e) => setLanguage(e.target.value)}>
         <option>English UK</option>
         <option>English US</option>
@@ -191,12 +226,73 @@ When providing the output, say: For input: ${pKeyword} and then provide the rest
         <option>French</option>
         <option>German</option>
       </select>
+ <div className="text-sm mt-1">
+          Select the Screen Size
+        </div>
+<select className="w-full p-2 border mb-2" value={screenSize} onChange={(e) => {
+  setscreenSize(e.target.value);
+  if (e.target.value === "bespoke") {
+    setBespokeTitleCharCount("");
+    setBespokeDescCharCount("150-160");
+  } else {
+    setBespokeTitleCharCount("");
+    setBespokeDescCharCount("");
+  }
+}} required>
+  <option value="desktop">Desktop</option>
+  <option value="mobile">Mobile</option>
+  <option value="bespoke">Bespoke</option>
+</select>
 
-      <select className="w-full p-2 border mb-2" value={screenSize} onChange={(e) => setscreenSize(e.target.value)} required>
-        <option value="desktop">Desktop</option>
-        <option value="mobile">Mobile</option>
-      </select>
-
+{screenSize === "bespoke" && (
+  <div className="mb-2">
+    <div className="mt-2">
+          <div className="text-sm mt-1">
+          Title
+        </div>
+      <input
+        type="number"
+        min={1}
+        max={120}
+        value={bespokeTitleCharCount}
+        onChange={(e) => setBespokeTitleCharCount(e.target.value)}
+        className="w-full p-2 border mb-2"
+        placeholder="Enter max title character count (max 75)"
+      />
+      {bespokeTitleCharCount > 75 && (
+        <div className="text-red-600 text-sm mt-1">
+          Warning: Title character count cannot exceed 75.
+        </div>
+      )}
+          <div className="text-sm mt-1">
+          Meta Description
+        </div>
+      <input
+        type="text"
+        value={bespokeDescCharCount}
+        onChange={(e) => setBespokeDescCharCount(e.target.value)}
+        className="w-full p-2 border"
+        placeholder='Enter max description character count (e.g. "150-160")'
+      />
+      {/* Optional: Add a warning for description char count if you want */}
+    </div>
+  </div>
+)}
+<div className="flex items-center mb-2">
+  <input
+    type="checkbox"
+    id="recommendBrandInTitle"
+    checked={recommendBrandInTitle}
+    onChange={(e) => setRecommendBrandInTitle(e.target.checked)}
+    className="mr-2"
+  />
+  <label htmlFor="recommendBrandInTitle" className="text-sm">
+    Recommend adding the Brand name at the end of Page Titles
+  </label>
+</div>
+ <div className="text-sm mt-1">
+          Number of Lines
+        </div>
       <select className="w-full p-2 border mb-2" value={lines} onChange={(e) => setLines(Number(e.target.value))}>
         <option value={5}>5</option>
         <option value={10}>10</option>
