@@ -14,6 +14,35 @@ export default function PaidMedia() {
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Facebook placements
+  const [placements, setPlacements] = useState({
+    "Facebook Stories": true,
+    "Facebook Reels": true,
+    "Facebook Video Feed": true,
+  });
+
+  // Google Ads fields
+  const [googleFields, setGoogleFields] = useState({
+    Headline: true,
+    Description: true,
+    Path: true,
+    Sitelink: true,
+  });
+
+  const handlePlacementChange = (placement) => {
+    setPlacements((prev) => ({
+      ...prev,
+      [placement]: !prev[placement],
+    }));
+  };
+
+  const handleGoogleFieldChange = (field) => {
+    setGoogleFields((prev) => ({
+      ...prev,
+      [field]: !prev[field],
+    }));
+  };
+
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (file && file.type === "text/csv") {
@@ -27,6 +56,30 @@ export default function PaidMedia() {
 
   const generatePrompt = (input) => {
     if (platform === "Facebook") {
+      // Always include Image Facebook Feed
+      const selectedPlacements = [
+        "Image Facebook Feed",
+        ...Object.entries(placements)
+          .filter(([_, checked]) => checked)
+          .map(([name]) => name),
+      ];
+
+      // Build placement instructions
+      const placementInstructions = selectedPlacements
+        .map(
+          (placement, idx) => `
+${idx + 1}. ${placement}
+Option 1:
+Primary text: [text] ([character count]) 
+Headline: [text] ([character count]) 
+Option 2:
+Primary text: [text] ([character count]) 
+Headline: [text] ([character count]) 
+...repeat up to Option ${lines}...
+`
+        )
+        .join("\n");
+
       return `You are a skilled marketing copywriter with expertise in creating compelling ads. You will need to go through the following steps to ensure the exact demands of the input values and provide ${lines} versions of each of the requested outputs.
 
 Input Client:
@@ -35,57 +88,69 @@ Please write the ads for ${input} and use the tone of voice of the website and t
 Input Language:
 Please write the ads in the correct spelling and grammar of ${language}
 
-Input Key Marketing Objective:
-The objective of the ads is to ${objective}
+Input Key: Marketing Objective
+The goal of the ads is: ${objective}
 
-If it is Sales then you will sell the product to the user and should contain as much direct information about the product.
-If it is Awareness then you will generate awareness for the product.
+If the objective is Sales, analyze the landing page and extract the following:
+- Product name
+- Exact price (if unavailable, look for percentage discounts)
+- 3 to 5 key features
+- Customer benefits
+- Any available promotional offers
+- Clues about the target audience
+- A strong call-to-action
+
+Ensure the extracted information is concise, relevant, and aligned with a persuasive sales tone.
+
+
+If the objective is Awareness, analyze the landing page and extract the following:
+- Brand name and positioning
+- Core message or value proposition
+- 3 to 5 key themes or topics emphasized
+- Emotional tone or storytelling elements
+- Target audience cues
+- Any slogans, taglines, or memorable phrases
+- Soft call-to-action (e.g., “Learn more,” “Explore,” etc.)
+
+Focus on conveying brand identity, recognition, and interest rather than direct conversion.
 
 ------
 
 IMPORTANT: Output ONLY the following fields for each placement and each option, in this exact order, with no extra text, no explanations, and no markdown or special formatting. Use plain text only. DO NOT use asterisks, hashes, or any special characters.
 
 For each placement, output ${lines} options, in this format:
-
-1. Image Facebook Feed
-Option 1:
-Primary text: [text] ([character count]) 
-Headline: [text] ([character count]) 
-Option 2:
-Primary text: [text] ([character count]) 
-Headline: [text] ([character count]) 
-...repeat up to Option ${lines}...
-
-2. Facebook Stories
-Option 1:
-Primary text: [text] ([character count]) 
-Headline: [text] ([character count]) 
-Option 2:
-Primary text: [text] ([character count]) 
-Headline: [text] ([character count]) 
-...repeat up to Option ${lines}...
-
-3. Facebook Reels
-Option 1:
-Primary text: [text] ([character count]) 
-Headline: [text] ([character count]) 
-Option 2:
-Primary text: [text] ([character count]) 
-Headline: [text] ([character count]) 
-...repeat up to Option ${lines}...
-
-4. Facebook Video Feed
-Option 1:
-Primary text: [text] ([character count]) 
-Headline: [text] ([character count]) 
-Option 2:
-Primary text: [text] ([character count]) 
-Headline: [text] ([character count]) 
-...repeat up to Option ${lines}...
+${placementInstructions}
 
 Do not include any other text, explanations, or formatting. Do not use asterisks, hashes, or markdown. Use only plain text as shown above.
 `;
     } else {
+      // Google Ads: Build output fields based on selected checkboxes
+      const fields = [];
+      if (googleFields.Headline) {
+        fields.push(
+          "Headline (1): [text] ([character count])",
+          "Headline (2): [text] ([character count])"
+        );
+      }
+      if (googleFields.Description) {
+        fields.push(
+          "Description (1): [text] ([character count])",
+          "Description (2): [text] ([character count])"
+        );
+      }
+      if (googleFields.Path) {
+        fields.push(
+          "Path (1): [text] ([character count])",
+          "Path (2): [text] ([character count])"
+        );
+      }
+      if (googleFields.Sitelink) {
+        fields.push(
+          "SiteLink (1): [text] ([character count])",
+          "SiteLink (2): [text] ([character count])"
+        );
+      }
+
       return `You are a skilled marketing copywriter with expertise in creating compelling ads. You will need to go through the following steps to ensure the exact demands of the input values and provide ${lines} versions of each of the requested outputs.
 
 Input Client:
@@ -97,8 +162,33 @@ Please write the ads in the correct spelling and grammar of ${language}
 Input Key Marketing Objective:
 The objective of the ads is to ${objective}
 
-If it is Sales then you will sell the product to the user and should contain as much direct information about the product.
-If it is Awareness then you will generate awareness for the product.
+If it is Sales then you will Extract from the landing page the product name, exact price, 3 to 5 key features, customer benefits, any available offers, target audience cues, and strong call-to-action; if the price is not found, look for a percentage discount
+
+Input Key: Marketing Objective
+The goal of the ads is: ${objective}
+
+If the objective is Sales, analyze the landing page and extract the following:
+- Product name
+- Exact price (if unavailable, look for percentage discounts)
+- 3 to 5 key features
+- Customer benefits
+- Any available promotional offers
+- Clues about the target audience
+- A strong call-to-action
+
+Ensure the extracted information is concise, relevant, and aligned with a persuasive sales tone.
+
+
+If the objective is Awareness, analyze the landing page and extract the following:
+- Brand name and positioning
+- Core message or value proposition
+- 3 to 5 key themes or topics emphasized
+- Emotional tone or storytelling elements
+- Target audience cues
+- Any slogans, taglines, or memorable phrases
+- Soft call-to-action (e.g., “Learn more,” “Explore,” etc.)
+
+Focus on conveying brand identity, recognition, and interest rather than direct conversion.
 
 -------
 
@@ -106,14 +196,9 @@ Output ONLY the following fields for each ad, in this exact order, with no extra
 Each of the headlines contain up to 30 characters, descriptions up to 90 characters, and paths up to 15 characters.
 
 For each ad, output:
-Headline (1): [text] ([character count]) 
-Headline (2): [text] ([character count])
-Description (1): [text] ([character count])
-Description (2): [text] ([character count])
-Path (1): [text] ([character count])
-Path (2): [text] ([character count])
+${fields.join('\n')}
 
-Repeat for each ad. Do not include any other text, explanations, or formatting.
+Repeat for each ad for ${lines} times. Do not include any other text, explanations, or formatting.
 
 `;
     }
@@ -238,20 +323,90 @@ Repeat for each ad. Do not include any other text, explanations, or formatting.
             <p className="mt-2 text-gray-600">Upload a CSV file containing URLs or keywords.</p>
           </div>
         )}
-        {/* ...rest of your form controls... */}
         <div className="text-sm mt-1">Select a Language</div>
         <select className="w-full p-2 border mb-2" value={language} onChange={(e) => setLanguage(e.target.value)}>
           <option>English UK</option>
           <option>English US</option>
           <option>Italian</option>
           <option>French</option>
-           <option>German</option>
         </select>
         <div className="text-sm mt-1">Select the Platform</div>
         <select className="w-full p-2 border mb-2" value={platform} onChange={(e) => setPlatform(e.target.value)}>
           <option>Facebook</option>
           <option>Google Ads</option>
         </select>
+        {platform === "Facebook" && (
+          <div className="mb-4">
+            <label className="block font-semibold mb-1">Select Facebook Placements:</label>
+            <div className="ml-2">
+              <div>
+                <input type="checkbox" checked={true} disabled readOnly />
+                <span className="ml-2">Image Facebook Feed (always included)</span>
+              </div>
+              <div>
+                <input type="checkbox" checked={placements["Facebook Stories"]} onChange={() => handlePlacementChange("Facebook Stories")} id="fb-stories" />
+                <label htmlFor="fb-stories" className="ml-2">
+                  Facebook Stories
+                </label>
+              </div>
+              <div>
+                <input type="checkbox" checked={placements["Facebook Reels"]} onChange={() => handlePlacementChange("Facebook Reels")} id="fb-reels" />
+                <label htmlFor="fb-reels" className="ml-2">
+                  Facebook Reels
+                </label>
+              </div>
+              <div>
+                <input type="checkbox" checked={placements["Facebook Video Feed"]} onChange={() => handlePlacementChange("Facebook Video Feed")} id="fb-video-feed" />
+                <label htmlFor="fb-video-feed" className="ml-2">
+                  Facebook Video Feed
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
+        {platform === "Google Ads" && (
+          <div className="mb-4">
+            <label className="block font-semibold mb-1">Select Google Ads Fields:</label>
+            <div className="ml-2">
+              <div>
+                <input
+                  type="checkbox"
+                  checked={googleFields.Headline}
+                  onChange={() => handleGoogleFieldChange("Headline")}
+                  id="ga-headline"
+                />
+                <label htmlFor="ga-headline" className="ml-2">Headline</label>
+              </div>
+              <div>
+                <input
+                  type="checkbox"
+                  checked={googleFields.Description}
+                  onChange={() => handleGoogleFieldChange("Description")}
+                  id="ga-description"
+                />
+                <label htmlFor="ga-description" className="ml-2">Description</label>
+              </div>
+              <div>
+                <input
+                  type="checkbox"
+                  checked={googleFields.Path}
+                  onChange={() => handleGoogleFieldChange("Path")}
+                  id="ga-path"
+                />
+                <label htmlFor="ga-path" className="ml-2">Path</label>
+              </div>
+              <div>
+                <input
+                  type="checkbox"
+                  checked={googleFields.Sitelink}
+                  onChange={() => handleGoogleFieldChange("Sitelink")}
+                  id="ga-sitelink"
+                />
+                <label htmlFor="ga-sitelink" className="ml-2">Sitelink</label>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="text-sm mt-1">Type of Marketing Objective</div>
         <select className="w-full p-2 border mb-2" value={objective} onChange={(e) => setObjective(e.target.value)}>
           <option>Sales</option>
