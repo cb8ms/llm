@@ -19,6 +19,7 @@ export default function SEO() {
   const [bespokeTitleCharCount, setBespokeTitleCharCount] = useState("");
   const [bespokeDescCharCount, setBespokeDescCharCount] = useState("");
   const [recommendBrandInTitle, setRecommendBrandInTitle] = useState(false);
+  const [objective, setObjective] = useState("Sales");
 
   function parseCsvLine(line) {
     const result = [];
@@ -116,6 +117,12 @@ export default function SEO() {
     const basePrompt = `You are an SEO expert in writing metadata and must strictly follow the steps below to meet all input requirements. You will provide ${lines} distinct versions of each metadata output.
 
 Inputs: URL: ${url}; Primary Keyword: ${pKeyword}; Secondary Keyword(s): ${sKeyword}; Brand: ${brand}. Use the tone of voice from the website at ${url}. Write for a ${screenSize.toLowerCase()} display audience in ${language}.
+
+Input Key Marketing Objective:
+The objective of the ads is to ${objective}
+
+If it is Sales then focus will be on directly selling the product to the user. The content should emphasise product details, key benefits, and strong call-to-action (CTA) elements. The tone should be action-oriented, driving users towards making a purchase or conversion. This will include product-focused headlines, clear meta descriptions, and persuasive language encouraging immediate action.
+If it is Editorial then goal is to generate awareness and interest in the product. Content should highlight the product's value within a broader context, providing informative, engaging, and insightful content that educates the user. The approach will be more story-driven and centred around building awareness. Use content-driven headlines and descriptions, focusing on showcasing features and benefits in a more subtle, less direct way.
 
 Your task is to write:
 - ${lines} page titles, each no more than ${titleCharLimitMax} characters (including spaces), and ideally within 5 characters of that limit.
@@ -280,6 +287,11 @@ Do not include any other text, explanations, or formatting. Use only plain text 
             Recommend adding the Brand name at the end of Page Titles
           </label>
         </div>
+        <div className="text-sm mt-1">Type of Marketing Objective</div>
+        <select className="w-full p-2 border mb-2" value={objective} onChange={(e) => setObjective(e.target.value)}>
+          <option>Sales</option>
+          <option>Editorial</option>
+        </select>
         <div className="text-sm mt-1">Number of Lines</div>
         <select className="w-full p-2 border mb-2" value={lines} onChange={(e) => setLines(Number(e.target.value))}>
           <option value={5}>5</option>
